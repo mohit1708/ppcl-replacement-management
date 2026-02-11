@@ -1,0 +1,24 @@
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            padding: 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            padding: 10px 15px;
+            margin: 5px 10px;
+            border-radius: 5px;
+        }
+        .sidebar .nav-link.active {
+            background-color: #007bff !important;
+        }
+        .printer-card {
+            transition: all 0.3s ease;
+        }
+        .printer-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    
