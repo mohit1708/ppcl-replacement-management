@@ -1,0 +1,15 @@
+# Build output
+target/
+
+# IDE
+.idea/
+*.iml
+
+# Smart Tomcat plugin
+.smarttomcat/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log

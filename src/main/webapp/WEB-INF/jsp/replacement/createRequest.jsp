@@ -421,6 +421,12 @@
     $(document).ready(function () {
         console.log("✅ Page loaded");
 
+        $('#client').select2({
+            placeholder: 'Search or select client...',
+            allowClear: true,
+            width: '100%'
+        });
+
         // Check for error parameters in URL
         checkUrlErrors();
 
