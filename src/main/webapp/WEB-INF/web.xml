@@ -6,23 +6,26 @@
                         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
         version="6.0">
     <display-name>Replacement Management</display-name>
+
     <context-param>
-        <param-name>dsc.p12.path</param-name>
-        <param-value>
-            /home/naruto/IdeaProjects/ppcl-replacement-mgmt/src/main/java/com/ppcl/replacement/util/testdsc.p12
-        </param-value>
+        <param-name>dsc.windows.cert.alias</param-name>
+        <param-value></param-value>
     </context-param>
     <context-param>
-        <param-name>dsc.p12.password</param-name>
-        <param-value>password</param-value>
+        <param-name>dsc.windows.cert.subject.contains</param-name>
+        <param-value>MyTestDSC</param-value>
     </context-param>
     <context-param>
         <param-name>dsc.merge.base.dir</param-name>
-        <param-value>/home/naruto/ppcl/agr</param-value>
+        <param-value>D:\PPCL</param-value>
     </context-param>
     <context-param>
         <param-name>dsc.signed.output.dir</param-name>
-        <param-value>/home/naruto/ppcl/signed_replacement_letter</param-value>
+        <param-value>D:\PPCL</param-value>
+    </context-param>
+    <context-param>
+        <param-name>mobile.pagecount.image.dir</param-name>
+        <param-value>D:\PPCL</param-value>
     </context-param>
     <session-config>
         <session-timeout>30</session-timeout>

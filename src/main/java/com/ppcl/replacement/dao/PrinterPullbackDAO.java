@@ -639,10 +639,14 @@ public class PrinterPullbackDAO extends BaseDAO {
             clientRequest.setCallDate(new SimpleDateFormat("dd-MM-yyyy").format(now));
             clientRequest.setCallTime(new SimpleDateFormat("hh:mm a").format(now));
             clientRequest.setClientId(String.valueOf(client.getId()));
-            clientRequest.setCallDetails("PRINTER PULLBACK BOOKED");
+            clientRequest.setCallDetails("PRINTER PULL BACK");
             clientRequest.setContactNo(client.getMobileNo());
             clientRequest.setPSerial(printer.getExistingSerial());
             clientRequest.setPModel(printer.getExistingPModelId());
+            clientRequest.setCallDone("NO");
+            clientRequest.setProblemId(100);
+            clientRequest.setOnlineSupport(1);
+            clientRequest.setVenId(0);
 
             // COORDINATOR = REPLACEMENT_REQUEST.REQUESTER_USER_ID
             if (request.getRequesterUserId() != null && !request.getRequesterUserId().isEmpty()) {

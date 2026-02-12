@@ -6,22 +6,35 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ppcl.replacement.util.DBConnectionPool;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.Part;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @WebServlet("/mobile/pageCount")
+@MultipartConfig
 public class MobilePageCountServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
+    private static final String IMAGE_UPLOAD_DIR_PARAM = "mobile.pagecount.image.dir";
+    private static final DateTimeFormatter FILE_TS_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
 
     @Override
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
@@ -35,16 +48,14 @@ public class MobilePageCountServlet extends HttpServlet {
         final JsonArray detailsArray = new JsonArray();
 
         try {
-            final StringBuilder sb = new StringBuilder();
-            final BufferedReader reader = request.getReader();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-            }
-
-            final JsonObject requestBody = JsonParser.parseString(sb.toString()).getAsJsonObject();
+            final JsonObject requestBody = parseRequestBody(request);
             final String replacementRequestId = requestBody.get("replacementRequestId").getAsString();
             final JsonArray statusArray = requestBody.getAsJsonArray("status");
+
+            final String imagePath = saveImageIfPresent(request, replacementRequestId);
+            if (imagePath != null) {
+                responseJson.addProperty("uploadedImagePath", imagePath);
+            }
 
             boolean allSuccess = true;
 
@@ -100,6 +111,85 @@ public class MobilePageCountServlet extends HttpServlet {
 
         out.print(gson.toJson(responseJson));
         out.flush();
+    }
+
+    private JsonObject parseRequestBody(final HttpServletRequest request) throws Exception {
+        if (isMultipartRequest(request)) {
+            final String replacementRequestId = request.getParameter("replacementRequestId");
+            final String statusRaw = request.getParameter("status");
+            if (replacementRequestId == null || replacementRequestId.trim().isEmpty()) {
+                throw new IllegalArgumentException("replacementRequestId is required");
+            }
+            if (statusRaw == null || statusRaw.trim().isEmpty()) {
+                throw new IllegalArgumentException("status is required");
+            }
+            final JsonObject body = new JsonObject();
+            body.addProperty("replacementRequestId", replacementRequestId);
+            body.add("status", JsonParser.parseString(statusRaw).getAsJsonArray());
+            return body;
+        }
+
+        final StringBuilder sb = new StringBuilder();
+        final BufferedReader reader = request.getReader();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line);
+        }
+        return JsonParser.parseString(sb.toString()).getAsJsonObject();
+    }
+
+    private String saveImageIfPresent(final HttpServletRequest request, final String replacementRequestId) throws Exception {
+        if (!isMultipartRequest(request)) {
+            return null;
+        }
+
+        final Part imagePart = request.getPart("image");
+        if (imagePart == null || imagePart.getSize() == 0) {
+            return null;
+        }
+
+        final String originalFileName = getSubmittedFileName(imagePart);
+        final String extension = extractSafeExtension(originalFileName);
+        final String safeRequestId = replacementRequestId.replaceAll("[^0-9A-Za-z_-]", "_");
+        final String generatedName = "pagecount_" + safeRequestId + "_" + FILE_TS_FORMAT.format(LocalDateTime.now()) + extension;
+
+        final ServletContext servletContext = request.getServletContext();
+        final String uploadDirConfig = servletContext.getInitParameter(IMAGE_UPLOAD_DIR_PARAM);
+        if (uploadDirConfig == null || uploadDirConfig.trim().isEmpty()) {
+            throw new IllegalStateException("Missing context-param: " + IMAGE_UPLOAD_DIR_PARAM);
+        }
+
+        final Path uploadDir = Paths.get(uploadDirConfig.trim());
+        Files.createDirectories(uploadDir);
+
+        final Path targetFile = uploadDir.resolve(generatedName);
+        Files.copy(imagePart.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+        return targetFile.toString();
+    }
+
+    private boolean isMultipartRequest(final HttpServletRequest request) {
+        final String contentType = request.getContentType();
+        return contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/");
+    }
+
+    private String getSubmittedFileName(final Part part) {
+        final String partName = part.getSubmittedFileName();
+        return partName == null ? "" : partName;
+    }
+
+    private String extractSafeExtension(final String fileName) {
+        if (fileName == null) {
+            return ".bin";
+        }
+        final int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex < 0 || dotIndex == fileName.length() - 1) {
+            return ".bin";
+        }
+        final String ext = fileName.substring(dotIndex).toLowerCase(Locale.ROOT);
+        if (ext.matches("\\.[a-z0-9]{1,10}")) {
+            return ext;
+        }
+        return ".bin";
     }
 
     private boolean printerExistsForRequest(final Connection conn, final String requestId, final String serialNo) throws Exception {

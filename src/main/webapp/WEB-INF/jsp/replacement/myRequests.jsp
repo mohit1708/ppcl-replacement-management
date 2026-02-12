@@ -266,10 +266,6 @@
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No Requests Found</h5>
                     <p class="text-muted">You don't have any replacement requests at the moment.</p>
-                    <a href="${pageContext.request.contextPath}/views/replacement/request?action=new"
-                       class="btn btn-primary">
-                        <i class="fas fa-plus-circle"></i> Create New Request
-                    </a>
                 </div>
             </c:when>
             <c:otherwise>

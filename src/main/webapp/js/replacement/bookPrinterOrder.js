@@ -210,7 +210,7 @@ var BookPrinterOrder = (function($) {
                 '<h6 class="font-weight-bold mb-3">Cartridge & Accessories</h6>' +
                 '<div class="row">' +
                     '<div class="col-md-3 form-group">' +
-                        '<label class="small">Cartridge Pickup (OLD)?</label>' +
+                        '<label class="small">Unused Cartridge Pickup?</label>' +
                         '<div class="mt-2">' +
                             '<div class="custom-control custom-radio custom-control-inline">' +
                                 '<input type="radio" class="custom-control-input cart-pickup" id="cartPickupYes' + itemIndex + '" name="cartPickup' + itemIndex + '" value="yes">' +
@@ -227,7 +227,7 @@ var BookPrinterOrder = (function($) {
                         '<input type="number" class="form-control form-control-sm pickup-qty" value="0" min="0" disabled>' +
                     '</div>' +
                     '<div class="col-md-3 form-group">' +
-                        '<label class="small">Send Cartridge with New?</label>' +
+                        '<label class="small"> Send Cartridge with Printer?</label>' +
                         '<div class="mt-2">' +
                             '<div class="custom-control custom-radio custom-control-inline">' +
                                 '<input type="radio" class="custom-control-input cart-send" id="cartSendYes' + itemIndex + '" name="cartSend' + itemIndex + '" value="yes">' +
