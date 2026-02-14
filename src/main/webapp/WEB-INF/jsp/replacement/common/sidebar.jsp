@@ -84,6 +84,12 @@
                             <span class="nav-text fadeable">Pullback Management</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/views/replacement/courier-pincode/page">
+                            <i class="nav-icon fas fa-map-marker-alt"></i>
+                            <span class="nav-text fadeable">Courier Pincode Mapping</span>
+                        </a>
+                    </li>
 
                     <!-- REPORTS -->
                     <li class="nav-item">
