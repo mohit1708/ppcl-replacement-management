@@ -433,10 +433,8 @@ public class PrinterPullbackDAO extends BaseDAO {
                     EMPTY_CARTRIDGE = ?, UNUSED_CARTRIDGE = ?, STATUS = ?, COMMENTS = ?
                 WHERE ID = ?
                 """;
-
         Connection conn = null;
         PreparedStatement ps = null;
-
         try {
             conn = getConnection();
             ps = conn.prepareStatement(sql);
@@ -457,7 +455,6 @@ public class PrinterPullbackDAO extends BaseDAO {
 
     public boolean triggerCreditNote(final int id, final String creditInfo) throws SQLException {
         final String sql = "UPDATE REPLACEMENT_PULLBACK SET STATUS = 3, COMMENTS = COMMENTS || ' | CREDIT NOTE: ' || ? WHERE ID = ?";
-
         Connection conn = null;
         PreparedStatement ps = null;
 
@@ -481,7 +478,6 @@ public class PrinterPullbackDAO extends BaseDAO {
             default -> 0;
         };
     }
-
     // ==================== Printer Pullback After Booking ====================
 
     /**
@@ -503,7 +499,6 @@ public class PrinterPullbackDAO extends BaseDAO {
      */
     public void processPrinterPullbackAfterBooking(final int replacementReqId) throws Exception {
         System.out.println("DEBUG [PrinterPullbackDAO]: processPrinterPullbackAfterBooking ENTERED for reqId=" + replacementReqId);
-
         final ReplacementRequestDAO replacementRequestDAO = new ReplacementRequestDAO();
         final ClientDAO clientDAO = new ClientDAO();
         final CourierPincodeMappingDAO courierPincodeMappingDAO = new CourierPincodeMappingDAO();
@@ -522,9 +517,7 @@ public class PrinterPullbackDAO extends BaseDAO {
             logger.info("No printers found for replacement request: {}. Skipping pullback.", replacementReqId);
             return;
         }
-
         System.out.println("DEBUG [PrinterPullbackDAO]: Found " + printers.size() + " printer(s) for reqId=" + replacementReqId);
-
         // 2. Process all printers in a single transaction
         Connection conn = null;
         try {
@@ -639,16 +632,25 @@ public class PrinterPullbackDAO extends BaseDAO {
             clientRequest.setCallDate(new SimpleDateFormat("dd-MM-yyyy").format(now));
             clientRequest.setCallTime(new SimpleDateFormat("hh:mm a").format(now));
             clientRequest.setClientId(String.valueOf(client.getId()));
-            clientRequest.setCallDetails("PRINTER PULLBACK BOOKED");
+            clientRequest.setCallDetails("PRINTER PULL BACK");
+            clientRequest.setCallStatusName("FIELD VISIT REQUIRE");
             clientRequest.setContactNo(client.getMobileNo());
             clientRequest.setPSerial(printer.getExistingSerial());
             clientRequest.setPModel(printer.getExistingPModelId());
+            clientRequest.setProblemId(100);
+            clientRequest.setCallDone("NO");
+            clientRequest.setCallStatus(13);
+            clientRequest.setCallType(5);
+            clientRequest.setCallTypeName("PULL BACK");
+            clientRequest.setOnlineSupport(1);
+            clientRequest.setVenId(0);
+            clientRequest.setBrId(client.getBrId());
+            clientRequest.setRemarks("Auto pull back call against replacement order# "+request.getId());
 
             // COORDINATOR = REPLACEMENT_REQUEST.REQUESTER_USER_ID
             if (request.getRequesterUserId() != null && !request.getRequesterUserId().isEmpty()) {
                 clientRequest.setCoordinator(Integer.parseInt(request.getRequesterUserId()));
             }
-
             clientRequestDAO.insert(conn, clientRequest);
             logger.info("Scenario 2: Inserted CLIENT_REQUEST with CALL_ID={} for printer detail ID={}",
                     newCallId, printer.getId());
