@@ -48,6 +48,7 @@ public class DashboardServlet extends BaseServlet {
 
     private static final long serialVersionUID = 1L;
     private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int DEFAULT_EVENT_PAGE_SIZE = 25;
 
     private final Gson gson = new Gson();
     private final DashboardDAO dao = new DashboardDAO();
@@ -385,9 +386,19 @@ public class DashboardServlet extends BaseServlet {
         try {
             final DashboardFilters filters = buildFiltersFromRequest(request);
 
+            // Default to larger page size for events if not explicitly set
+            if (request.getParameter("pageSize") == null) {
+                filters.setPageSize(DEFAULT_EVENT_PAGE_SIZE);
+            }
+
             // Get event tracking data
             final List<EventTrackingRow> events = dao.getEventTrackingData(filters);
             final int totalCount = dao.getEventTrackingCount(filters);
+
+            // Calculate pagination info
+            final int totalPages = DashboardUtil.getTotalPages(totalCount, filters.getPageSize());
+            final int startRecord = DashboardUtil.getStartRecord(filters.getPage(), filters.getPageSize());
+            final int endRecord = DashboardUtil.getEndRecord(filters.getPage(), filters.getPageSize(), totalCount);
 
             // Get filter dropdown options (with current filters for date awareness)
             final List<DashboardSummary.StageSummary> stages = dao.getStageSummary(filters);
@@ -409,6 +420,13 @@ public class DashboardServlet extends BaseServlet {
             request.setAttribute("stageSummary", stageSummary);
             request.setAttribute("ownerSummary", ownerSummary);
             request.setAttribute("departmentSummary", departmentSummary);
+
+            // Pagination attributes
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("currentPage", filters.getPage());
+            request.setAttribute("pageSize", filters.getPageSize());
+            request.setAttribute("startRecord", startRecord);
+            request.setAttribute("endRecord", endRecord);
 
             // Get filter display names for tags
             if (filters.getStageId() != null) {

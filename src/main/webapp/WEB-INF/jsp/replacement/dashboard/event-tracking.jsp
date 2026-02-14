@@ -65,6 +65,7 @@
                         <a href="${pageContext.request.contextPath}/views/replacement/dashboard/events" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times mr-1"></i> Clear</a>
                     </div>
                 </div>
+                <input type="hidden" name="page" id="pageInput" value="${currentPage}">
                 <input type="hidden" name="departmentId" id="departmentId" value="${filters.departmentId}">
 
                 <!-- Active Filters -->
@@ -95,8 +96,17 @@
     <!-- Results Table -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <div><i class="fas fa-table mr-2"></i> Showing <strong>${fn:length(events)}</strong> of <strong>${totalCount}</strong> events</div>
-            <a href="${pageContext.request.contextPath}/views/replacement/dashboard" class="btn btn-sm btn-outline-primary"><i class="fas fa-chart-bar mr-1"></i> View Summary</a>
+            <div><i class="fas fa-table mr-2"></i> Showing <strong>${startRecord}</strong> - <strong>${endRecord}</strong> of <strong><fmt:formatNumber value="${totalCount}"/></strong> events</div>
+            <div class="d-flex align-items-center">
+                <label class="small mb-0 mr-2 text-muted">Per page:</label>
+                <select class="form-control form-control-sm" style="width:auto" onchange="changePageSize(this.value)">
+                    <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
+                    <option value="25" ${pageSize == 25 ? 'selected' : ''}>25</option>
+                    <option value="50" ${pageSize == 50 ? 'selected' : ''}>50</option>
+                    <option value="100" ${pageSize == 100 ? 'selected' : ''}>100</option>
+                </select>
+                <a href="${pageContext.request.contextPath}/views/replacement/dashboard" class="btn btn-sm btn-outline-primary ml-2"><i class="fas fa-chart-bar mr-1"></i> View Summary</a>
+            </div>
         </div>
 
         <c:choose>
@@ -138,6 +148,59 @@
                 </div>
             </c:otherwise>
         </c:choose>
+
+        <!-- Pagination Footer -->
+        <c:if test="${totalCount > 0}">
+            <div class="card-footer d-flex justify-content-between align-items-center bg-light">
+                <div class="small text-muted">
+                    Showing <strong>${startRecord}</strong> - <strong>${endRecord}</strong> of <strong><fmt:formatNumber value="${totalCount}"/></strong> entries
+                </div>
+                <c:if test="${totalPages > 1}">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <%-- First Page --%>
+                            <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(1)" title="First"><i class="fas fa-angle-double-left"></i></a>
+                            </li>
+                            <%-- Previous Page --%>
+                            <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage - 1})" title="Previous"><i class="fas fa-chevron-left"></i></a>
+                            </li>
+
+                            <%-- Page Numbers (show window of 5 pages around current) --%>
+                            <c:set var="startPage" value="${currentPage - 2 < 1 ? 1 : currentPage - 2}" />
+                            <c:set var="endPage" value="${startPage + 4 > totalPages ? totalPages : startPage + 4}" />
+                            <c:if test="${endPage - startPage < 4 && endPage - 4 > 0}">
+                                <c:set var="startPage" value="${endPage - 4}" />
+                            </c:if>
+
+                            <c:if test="${startPage > 1}">
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            </c:if>
+
+                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                <li class="page-item ${currentPage == i ? 'active' : ''}">
+                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">${i}</a>
+                                </li>
+                            </c:forEach>
+
+                            <c:if test="${endPage < totalPages}">
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            </c:if>
+
+                            <%-- Next Page --%>
+                            <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage + 1})" title="Next"><i class="fas fa-chevron-right"></i></a>
+                            </li>
+                            <%-- Last Page --%>
+                            <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(${totalPages})" title="Last"><i class="fas fa-angle-double-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </c:if>
+            </div>
+        </c:if>
     </div>
 
     <!-- Summary Cards: Stage Wise + Owner Wise + Department Wise -->
@@ -242,19 +305,27 @@
 </div>
 
 <script>
-    $(document).ready(function() {
-        $('#eventsTable').DataTable({
-            paging: true,
-            pageLength: 25,
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-            ordering: true,
-            order: [[0, 'desc']],
-            info: true,
-            searching: true,
-            language: { search: "_INPUT_", searchPlaceholder: "Search..." },
-            columnDefs: [{ orderable: false, targets: [6] }]
-        });
-    });
+    function goToPage(page) {
+        if (page < 1 || page > ${totalPages}) return;
+        document.getElementById('pageInput').value = page;
+        document.getElementById('filterForm').submit();
+    }
+
+    function changePageSize(size) {
+        var form = document.getElementById('filterForm');
+        // Reset to page 1 when page size changes
+        document.getElementById('pageInput').value = 1;
+        // Add/update pageSize as hidden field
+        var pageSizeInput = form.querySelector('input[name="pageSize"]');
+        if (!pageSizeInput) {
+            pageSizeInput = document.createElement('input');
+            pageSizeInput.type = 'hidden';
+            pageSizeInput.name = 'pageSize';
+            form.appendChild(pageSizeInput);
+        }
+        pageSizeInput.value = size;
+        form.submit();
+    }
 
     function applyFilter(filterName, filterValue, tatFilter) {
         var form = document.getElementById('filterForm');
@@ -267,6 +338,8 @@
             var tatInput = form.querySelector('[name="tatFilter"]');
             if (tatInput) tatInput.value = tatFilter;
         }
+        // Reset to page 1 when applying filters
+        document.getElementById('pageInput').value = 1;
         form.submit();
     }
 
@@ -277,6 +350,8 @@
             if (input.tagName === 'SELECT') input.selectedIndex = 0;
             else input.value = '';
         }
+        // Reset to page 1 when removing filters
+        document.getElementById('pageInput').value = 1;
         form.submit();
     }
 </script>
