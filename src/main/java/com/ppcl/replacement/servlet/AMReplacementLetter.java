@@ -83,12 +83,8 @@ public class AMReplacementLetter extends BaseServlet {
             return;
         }
 
-        final String p12Path = getServletContext().getInitParameter("dsc.p12.path");
-        final String p12Password = getServletContext().getInitParameter("dsc.p12.password");
-        if (p12Path == null || p12Password == null) {
-            sendJsonError(resp, "DSC certificate not configured");
-            return;
-        }
+        final String windowsCertAlias = getServletContext().getInitParameter("dsc.windows.cert.alias");
+        final String windowsCertSubjectContains = getServletContext().getInitParameter("dsc.windows.cert.subject.contains");
 
         final ReplacementLetterData letterData = letterDAO.getLetterData(requestId);
         if (letterData.getClient() == null) {
@@ -111,10 +107,10 @@ public class AMReplacementLetter extends BaseServlet {
 
         final byte[] unsignedPdf = ReplacementLetterPdfGenerator.generate(letterData);
 
-        final byte[] signedPdf = DigitalSignUtil.signPdf(
+        final byte[] signedPdf = DigitalSignUtil.signPdfWithWindowsCertificate(
                 unsignedPdf,
-                p12Path,
-                p12Password.toCharArray(),
+                windowsCertAlias,
+                windowsCertSubjectContains,
                 "Replacement Letter Approved",
                 "PPCL Office",
                 true

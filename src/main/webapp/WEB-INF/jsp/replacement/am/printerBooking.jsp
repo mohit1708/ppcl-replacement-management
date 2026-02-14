@@ -183,7 +183,7 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group mb-md-0">
-                                            <label class="text-90">Cartridge Pickup (OLD)?</label>
+                                            <label class="text-90">Unused Cartridge Pickup?</label>
                                             <div class="mt-1">
                                                 <div class="custom-control custom-radio custom-control-inline">
                                                     <input type="radio" name="items[${status.index}].cartridgePickup" 
@@ -210,7 +210,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group mb-md-0">
-                                            <label class="text-90">Send Cartridge with New?</label>
+                                            <label class="text-90"> Send Cartridge with Printer?</label>
                                             <div class="mt-1">
                                                 <div class="custom-control custom-radio custom-control-inline">
                                                     <input type="radio" name="items[${status.index}].sendCartridge" 

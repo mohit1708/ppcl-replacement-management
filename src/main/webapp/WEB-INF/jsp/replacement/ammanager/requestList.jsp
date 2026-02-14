@@ -302,12 +302,12 @@
                                                 <small class="text-muted">Target: ${req.targetTatDays} days</small>
                                             </div>
                                         </td>
-                                        <td>
-                                            <button class="btn btn-info btn-xs py-0 px-2 mr-1" onclick="openViewModal(${req.id})" title="View Details">
-                                                <i class="fas fa-eye mr-1"></i> View
+                                        <td class="text-nowrap">
+                                            <button class="btn btn-outline-primary btn-sm px-2" style="min-width:90px;" onclick="openViewModal(${req.id})" title="View Details">
+                                                <i class="fas fa-eye"></i> View
                                             </button>
-                                            <button class="btn btn-primary btn-xs py-0 px-2" onclick="openCommercialAction(${req.id}, '${req.clientName}')">
-                                                <i class="fas fa-check-square"></i> Submit Commercial
+                                            <button class="btn btn-primary btn-sm px-2 ml-1" style="min-width:90px;" onclick="openCommercialAction(${req.id}, '${req.clientName}')" title="Submit Commercial">
+                                                <i class="fas fa-check-square"></i> Submit
                                             </button>
                                         </td>
                                     </tr>

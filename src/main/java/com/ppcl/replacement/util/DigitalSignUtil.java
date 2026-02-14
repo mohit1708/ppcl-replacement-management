@@ -14,7 +14,10 @@ import com.itextpdf.signatures.*;
 import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -146,6 +149,130 @@ public class DigitalSignUtil {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         signPdf(pdfBytes, bos, p12Path, p12Password, reason, location, visible);
         return bos.toByteArray();
+    }
+
+    /**
+     * Signs a PDF byte array using a certificate from the Windows "MY" store.
+     *
+     * @param certAlias              Optional exact keystore alias. Preferred if provided.
+     * @param certSubjectContains    Optional subject text match (case-insensitive) used when alias is not provided.
+     */
+    public static byte[] signPdfWithWindowsCertificate(
+            byte[] pdfBytes,
+            String certAlias,
+            String certSubjectContains,
+            String reason,
+            String location,
+            boolean visible
+    ) throws Exception {
+        KeyStore ks = KeyStore.getInstance("Windows-MY");
+        ks.load(null, null);
+
+        String alias = resolveWindowsCertificateAlias(ks, certAlias, certSubjectContains);
+        PrivateKey privateKey = (PrivateKey) ks.getKey(alias, null);
+        Certificate[] chain = ks.getCertificateChain(alias);
+        if (chain == null || chain.length == 0) {
+            Certificate cert = ks.getCertificate(alias);
+            if (cert != null) {
+                chain = new Certificate[]{cert};
+            }
+        }
+        if (privateKey == null || chain == null || chain.length == 0) {
+            throw new KeyStoreException("Selected Windows certificate is missing private key or certificate chain");
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        PdfSigner signer = new PdfSigner(
+                new PdfReader(new ByteArrayInputStream(pdfBytes)),
+                bos,
+                new StampingProperties()
+        );
+
+        PdfSignatureAppearance appearance = signer.getSignatureAppearance()
+                .setReason(reason)
+                .setLocation(location)
+                .setReuseAppearance(false);
+
+        if (visible) {
+            SignaturePosition position = findSignaturePosition(pdfBytes);
+            if (position != null) {
+                appearance
+                        .setPageRect(position.rect)
+                        .setPageNumber(position.pageNumber);
+            } else {
+                appearance
+                        .setPageRect(new Rectangle(55, 105, 180, 60))
+                        .setPageNumber(1);
+            }
+        }
+
+        signer.setFieldName("Signature1");
+
+        IExternalSignature signature = new PrivateKeySignature(
+                privateKey,
+                DigestAlgorithms.SHA256,
+                null
+        );
+
+        IExternalDigest digest = new DigitalSignUtil.DefaultDigest();
+        signer.signDetached(
+                digest,
+                signature,
+                chain,
+                null,
+                null,
+                null,
+                0,
+                PdfSigner.CryptoStandard.CADES
+        );
+
+        return bos.toByteArray();
+    }
+
+    private static String resolveWindowsCertificateAlias(
+            KeyStore keyStore,
+            String certAlias,
+            String certSubjectContains
+    ) throws Exception {
+        if (certAlias != null && !certAlias.trim().isEmpty()) {
+            String trimmedAlias = certAlias.trim();
+            if (!keyStore.containsAlias(trimmedAlias)) {
+                throw new KeyStoreException("Windows certificate alias not found: " + trimmedAlias);
+            }
+            return trimmedAlias;
+        }
+
+        Enumeration<String> aliases = keyStore.aliases();
+        String firstPrivateKeyAlias = null;
+        String subjectFilter = certSubjectContains == null ? "" : certSubjectContains.trim().toLowerCase(Locale.ROOT);
+
+        while (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            if (!keyStore.isKeyEntry(alias)) {
+                continue;
+            }
+            if (firstPrivateKeyAlias == null) {
+                firstPrivateKeyAlias = alias;
+            }
+            if (subjectFilter.isEmpty()) {
+                continue;
+            }
+            Certificate cert = keyStore.getCertificate(alias);
+            if (cert instanceof X509Certificate x509) {
+                String subject = x509.getSubjectX500Principal().getName();
+                if (subject != null && subject.toLowerCase(Locale.ROOT).contains(subjectFilter)) {
+                    return alias;
+                }
+            }
+        }
+
+        if (!subjectFilter.isEmpty()) {
+            throw new KeyStoreException("No Windows certificate subject matched: " + certSubjectContains);
+        }
+        if (firstPrivateKeyAlias == null) {
+            throw new KeyStoreException("No private-key certificates found in Windows-MY store");
+        }
+        return firstPrivateKeyAlias;
     }
 
     /**

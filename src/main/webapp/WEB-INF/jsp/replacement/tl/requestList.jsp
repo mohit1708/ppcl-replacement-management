@@ -241,11 +241,11 @@
                                             </small>
                                         </td>
                                         <td class="text-nowrap">
-                                            <button class="btn btn-outline-primary btn-sm px-2"
+                                            <button class="btn btn-outline-primary btn-sm px-2" style="min-width:90px;"
                                                     onclick="openViewModal(${req.id})" title="View Details">
                                                 <i class="fas fa-eye"></i> View
                                             </button>
-                                            <button class="btn btn-primary btn-sm px-2 ml-1"
+                                            <button class="btn btn-primary btn-sm px-2 ml-1" style="min-width:90px;"
                                                     onclick="openActionModal(${req.id}, '${fn:escapeXml(req.clientName)}')">
                                                 <i class="fas fa-edit"></i> Recommend
                                             </button>
