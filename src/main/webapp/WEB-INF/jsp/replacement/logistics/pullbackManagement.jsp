@@ -605,6 +605,16 @@
                     $('#damageDetails').prop('required', false);
                 }
             });
+
+            // DataTables initialized in hidden tabs can miscalculate header widths.
+            // Re-adjust when a tab becomes visible.
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+                Object.keys(dataTables).forEach(function(key) {
+                    if (dataTables[key]) {
+                        dataTables[key].columns.adjust().draw(false);
+                    }
+                });
+            });
         });
 
         function loadPullbackData() {
@@ -663,6 +673,15 @@
             initTable('#pullbackTableReceived');
             initTable('#pullbackTableVerified');
             initTable('#pullbackTableDamaged');
+
+            // Initial adjustment after render to keep header/body aligned.
+            setTimeout(function() {
+                Object.keys(dataTables).forEach(function(key) {
+                    if (dataTables[key]) {
+                        dataTables[key].columns.adjust().draw(false);
+                    }
+                });
+            }, 0);
         }
 
         function renderTableBody(selector, rows) {
