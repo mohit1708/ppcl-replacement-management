@@ -70,8 +70,6 @@
                             &mdash; view all printer replacement pickups assigned to you.
                         </p>
                         <p class="mb-0 mt-1 text-white-tp3 text-85">
-                            <i class="fas fa-id-badge mr-1"></i> ID: ${sessionScope.courierId}
-                            &nbsp;&nbsp;
                             <i class="fas fa-phone mr-1"></i> ${sessionScope.courierMobile}
                         </p>
                     </div>
