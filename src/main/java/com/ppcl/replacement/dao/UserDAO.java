@@ -1315,4 +1315,64 @@ public class UserDAO extends BaseDAO {
     }
 
 
+    public boolean isTLOrAbove(final int userId) throws SQLException {
+
+        final String sql = """
+        SELECT 1
+        FROM (
+            SELECT e.ID
+            FROM EMP e
+            START WITH e.DESIGNATION = 62
+            CONNECT BY NOCYCLE PRIOR e.REPORTING_TO = e.ID
+        )
+        WHERE ID = (
+            SELECT ua.EMP_ID
+            FROM USER_ACCOUNT ua
+            WHERE ua.ID = ?
+        )
+        FETCH FIRST 1 ROW ONLY
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public boolean isRoleForCourierLoginValid(final int userId) throws SQLException {
+
+        final String sql = """
+        SELECT 1
+        FROM USER_ACCOUNT ua
+        JOIN EMP e ON e.ID = ua.EMP_ID
+        WHERE ua.ID = ?
+          AND (
+                e.ID IN (
+                    SELECT h.ID
+                    FROM EMP h
+                    START WITH h.DESIGNATION IN (87,62)
+                    CONNECT BY NOCYCLE PRIOR h.REPORTING_TO = h.ID
+                )
+                OR UPPER(ua.DEPT) = 'LOGISTICS'
+          )
+        FETCH FIRST 1 ROW ONLY
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+
 }

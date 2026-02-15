@@ -75,7 +75,8 @@
                     </c:if>
 
 
-                    <!-- COURIER -->
+                    <!-- COURIER - Only visible to TL or above -->
+                    <c:if test="${sessionScope.isTLOrAbove}">
                     <li class="nav-item-caption">
                         <span class="nav-text text-uppercase text-80 text-grey-m2">COURIER</span>
                     </li>
@@ -85,6 +86,7 @@
                             <span class="nav-text fadeable">Generate Courier Login</span>
                         </a>
                     </li>
+                    </c:if>
 
                     <!-- LOGISTICS SECTION -->
                     <li class="nav-item-caption">
@@ -96,12 +98,14 @@
                             <span class="nav-text fadeable">Pullback Management</span>
                         </a>
                     </li>
+                    <c:if test="${sessionScope.isRoleForCourierLoginValid}">
                     <li class="nav-item">
                         <a class="nav-link" href="${pageContext.request.contextPath}/views/replacement/courier-pincode/page">
                             <i class="nav-icon fas fa-map-marker-alt"></i>
                             <span class="nav-text fadeable">Courier Pincode Mapping</span>
                         </a>
                     </li>
+                    </c:if>
 
                     <!-- REPORTS -->
                     <li class="nav-item">
