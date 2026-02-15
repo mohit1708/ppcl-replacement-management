@@ -2,6 +2,7 @@ package com.ppcl.replacement.servlet;
 
 import com.ppcl.replacement.dao.ReplacementLetterDAO;
 import com.ppcl.replacement.model.ReplacementLetterData;
+import com.ppcl.replacement.model.ReplacementPrinter;
 import com.ppcl.replacement.util.DBConnectionPool;
 import com.ppcl.replacement.util.DigitalSignUtil;
 import com.ppcl.replacement.util.ReplacementLetterPdfGenerator;
@@ -30,18 +31,42 @@ import java.util.List;
 import java.util.Map;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.util.Locale;
+import java.util.stream.Stream;
 
 @WebServlet("/am/replacementLetter")
 public class AMReplacementLetter extends BaseServlet {
 
-    private static final String SIGNED_LETTERS_DIR = "uploads/signed-letters";
-    private static final String DEFAULT_MERGE_BASE_DIR = "/home/naruto/ppcl/agr";
-    private static final String DEFAULT_SIGNED_OUTPUT_DIR = "/home/naruto/ppcl/signed_replacement_letter";
+    private static final DateTimeFormatter[] AGREEMENT_DATE_FORMATTERS = new DateTimeFormatter[] {
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S"),
+            new DateTimeFormatterBuilder()
+                    .parseCaseInsensitive()
+                    .appendPattern("dd-MMM-")
+                    .appendValueReduced(ChronoField.YEAR, 2, 2, 2000)
+                    .toFormatter(Locale.ENGLISH),
+            new DateTimeFormatterBuilder()
+                    .parseCaseInsensitive()
+                    .appendPattern("dd-MMM-yyyy")
+                    .toFormatter(Locale.ENGLISH),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+            DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    };
 
     private final ReplacementLetterDAO letterDAO = new ReplacementLetterDAO();
 
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
+        if (!ensureAuthenticated(req, resp)) {
+            return;
+        }
         final int requestId = getIntParameter(req, "requestId");
 
         final ReplacementLetterData letterData = letterDAO.getLetterData(requestId != 0 ? requestId : 1);
@@ -53,6 +78,9 @@ public class AMReplacementLetter extends BaseServlet {
 
     @Override
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
+        if (!ensureAuthenticated(req, resp)) {
+            return;
+        }
         final String action = req.getParameter("action");
 
         try {
@@ -116,17 +144,11 @@ public class AMReplacementLetter extends BaseServlet {
                 true
         );
 
-        final String appPath = getServletContext().getRealPath("");
-        final String uploadPath = appPath + File.separator + SIGNED_LETTERS_DIR;
-        final File uploadDir = new File(uploadPath);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
-
-        final String mergeBaseDirParam = getServletContext().getInitParameter("dsc.merge.base.dir");
-        final String mergeBaseDir = mergeBaseDirParam != null ? mergeBaseDirParam : DEFAULT_MERGE_BASE_DIR;
-        final String signedOutputDirParam = getServletContext().getInitParameter("dsc.signed.output.dir");
-        final String signedOutputDir = signedOutputDirParam != null ? signedOutputDirParam : DEFAULT_SIGNED_OUTPUT_DIR;
+        final LocalDate currentDate = LocalDate.now();
+        final Path mergeBaseDir = resolveConfiguredPath("dsc.merge.base.dir");
+        final Path signedOutputBasePath = resolveConfiguredPath("dsc.signed.output.dir");
+        final Path signedOutputDir = buildDatedPath(signedOutputBasePath, currentDate);
+        Files.createDirectories(signedOutputDir);
 
         final List<Map<String, String>> mergedLinks = new ArrayList<>();
         if (letterData.getPrinters() != null) {
@@ -136,18 +158,19 @@ public class AMReplacementLetter extends BaseServlet {
                 if (safeAgreementNo.isEmpty()) {
                     continue;
                 }
-                Path existingPdf = Paths.get(mergeBaseDir, safeAgreementNo + ".pdf");
-                if (!Files.exists(existingPdf)) {
+                Path existingPdf = resolveSourcePdfPath(mergeBaseDir, letterData.getPrinters().get(i), safeAgreementNo);
+                if (existingPdf == null || !Files.exists(existingPdf)) {
                     continue;
                 }
                 String mergedName = "merged_" + safeAgreementNo + "_" + requestId + ".pdf";
-                Path mergedPath = Paths.get(signedOutputDir, mergedName);
+                Path mergedPath = signedOutputDir.resolve(mergedName);
                 if (!Files.exists(mergedPath)) {
                     mergePdfAtBottom(existingPdf.toString(), signedPdf, mergedPath);
                 }
+                String relativeMergedPath = toRelativeFilePath(signedOutputBasePath, mergedPath);
                 Map<String, String> link = new HashMap<>();
                 link.put("label", String.valueOf(i + 1));
-                link.put("filePath", "signed-letter?file=" + URLEncoder.encode(mergedName, StandardCharsets.UTF_8.name()));
+                link.put("filePath", "signed-letter?file=" + URLEncoder.encode(relativeMergedPath, StandardCharsets.UTF_8));
                 mergedLinks.add(link);
             }
         }
@@ -157,11 +180,12 @@ public class AMReplacementLetter extends BaseServlet {
             relativePath = mergedLinks.get(0).get("filePath");
         } else {
             String fileName = "signed_" + requestId + ".pdf";
-            Path fallbackPath = Paths.get(signedOutputDir, fileName);
+            Path fallbackPath = signedOutputDir.resolve(fileName);
             if (!Files.exists(fallbackPath)) {
                 Files.write(fallbackPath, signedPdf);
             }
-            relativePath = "signed-letter?file=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8.name());
+            String relativeFallbackPath = toRelativeFilePath(signedOutputBasePath, fallbackPath);
+            relativePath = "signed-letter?file=" + URLEncoder.encode(relativeFallbackPath, StandardCharsets.UTF_8);
         }
         updateSignedLetterStatus(requestId, relativePath);
 
@@ -191,10 +215,9 @@ public class AMReplacementLetter extends BaseServlet {
             return mergedLinks;
         }
 
-        final String mergeBaseDirParam = getServletContext().getInitParameter("dsc.merge.base.dir");
-        final String mergeBaseDir = mergeBaseDirParam != null ? mergeBaseDirParam : DEFAULT_MERGE_BASE_DIR;
-        final String signedOutputDirParam = getServletContext().getInitParameter("dsc.signed.output.dir");
-        final String signedOutputDir = signedOutputDirParam != null ? signedOutputDirParam : DEFAULT_SIGNED_OUTPUT_DIR;
+        final Path mergeBaseDir = resolveConfiguredPath("dsc.merge.base.dir");
+        final Path signedOutputBasePath = resolveConfiguredPath("dsc.signed.output.dir");
+        final LocalDate signedDateHint = parseSignedAtDate(letterData.getSignedAt());
 
         for (int i = 0; i < letterData.getPrinters().size(); i++) {
             String agreementNo = letterData.getPrinters().get(i).getAgreementNoMapped();
@@ -202,18 +225,19 @@ public class AMReplacementLetter extends BaseServlet {
             if (safeAgreementNo.isEmpty()) {
                 continue;
             }
-            Path existingPdf = Paths.get(mergeBaseDir, safeAgreementNo + ".pdf");
-            if (!Files.exists(existingPdf)) {
+            Path existingPdf = resolveSourcePdfPath(mergeBaseDir, letterData.getPrinters().get(i), safeAgreementNo);
+            if (existingPdf == null || !Files.exists(existingPdf)) {
                 continue;
             }
             String mergedName = "merged_" + safeAgreementNo + "_" + letterData.getRequestId() + ".pdf";
-            Path mergedPath = Paths.get(signedOutputDir, mergedName);
-            if (!Files.exists(mergedPath)) {
+            Path mergedPath = resolveSignedFilePath(signedOutputBasePath, mergedName, signedDateHint);
+            if (mergedPath == null || !Files.exists(mergedPath)) {
                 continue;
             }
+            String relativeMergedPath = toRelativeFilePath(signedOutputBasePath, mergedPath);
             Map<String, String> link = new HashMap<>();
             link.put("label", String.valueOf(i + 1));
-            link.put("filePath", "signed-letter?file=" + encodeFileName(mergedName));
+            link.put("filePath", "signed-letter?file=" + encodeFileName(relativeMergedPath));
             mergedLinks.add(link);
         }
         return mergedLinks;
@@ -252,5 +276,147 @@ public class AMReplacementLetter extends BaseServlet {
             return "";
         }
         return input.replaceAll("[^A-Za-z0-9_-]", "");
+    }
+
+    private Path resolveSourcePdfPath(final Path mergeBaseDir,
+                                      final ReplacementPrinter printer,
+                                      final String safeAgreementNo) {
+        if (safeAgreementNo == null || safeAgreementNo.isEmpty()) {
+            return null;
+        }
+
+        final String fileName = safeAgreementNo + ".pdf";
+        final LocalDate agreementDate = parseAgreementDate(printer != null ? printer.getAgreementDate() : null);
+        if (agreementDate != null) {
+            final Path datedPath = mergeBaseDir
+                    .resolve(String.format("%04d", agreementDate.getYear()))
+                    .resolve(String.format("%02d", agreementDate.getMonthValue()))
+                    .resolve(String.format("%02d", agreementDate.getDayOfMonth()))
+                    .resolve(fileName);
+            if (Files.exists(datedPath)) {
+                return datedPath;
+            }
+        }
+
+        final Path legacyPath = mergeBaseDir.resolve(fileName);
+        if (Files.exists(legacyPath)) {
+            return legacyPath;
+        }
+
+        return null;
+    }
+
+    private LocalDate parseAgreementDate(final String rawAgreementDate) {
+        if (rawAgreementDate == null || rawAgreementDate.trim().isEmpty()) {
+            return null;
+        }
+        final String value = rawAgreementDate.trim();
+
+        for (DateTimeFormatter formatter : AGREEMENT_DATE_FORMATTERS) {
+            try {
+                return LocalDate.parse(value, formatter);
+            } catch (DateTimeParseException ignored) {
+                // Try next format.
+            }
+        }
+
+        if (value.length() >= 10) {
+            final String firstTen = value.substring(0, 10);
+            try {
+                return LocalDate.parse(firstTen, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            } catch (DateTimeParseException ignored) {
+                // Ignore.
+            }
+        }
+
+        return null;
+    }
+
+    private LocalDate parseSignedAtDate(final String rawSignedAtDate) {
+        if (rawSignedAtDate == null || rawSignedAtDate.trim().isEmpty()) {
+            return null;
+        }
+        final String value = rawSignedAtDate.trim();
+        final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .appendPattern("dd-MMM-yyyy HH:mm")
+                .toFormatter(Locale.ENGLISH);
+        try {
+            return LocalDateTime.parse(value, formatter).toLocalDate();
+        } catch (DateTimeParseException ignored) {
+            return null;
+        }
+    }
+
+    private Path buildDatedPath(final Path basePath, final LocalDate date) {
+        return basePath.resolve(String.format("%04d", date.getYear()))
+                .resolve(String.format("%02d", date.getMonthValue()))
+                .resolve(String.format("%02d", date.getDayOfMonth()));
+    }
+
+    private Path resolveSignedFilePath(final Path signedOutputBasePath,
+                                       final String fileName,
+                                       final LocalDate signedDateHint) {
+        if (signedDateHint != null) {
+            final Path datedPath = buildDatedPath(signedOutputBasePath, signedDateHint).resolve(fileName);
+            if (Files.exists(datedPath)) {
+                return datedPath;
+            }
+        }
+
+        final Path legacyPath = signedOutputBasePath.resolve(fileName);
+        if (Files.exists(legacyPath)) {
+            return legacyPath;
+        }
+
+        try (Stream<Path> stream = Files.find(signedOutputBasePath, 6,
+                (path, attrs) -> attrs.isRegularFile() && fileName.equals(path.getFileName().toString()))) {
+            return stream.findFirst().orElse(null);
+        } catch (IOException ignored) {
+            return null;
+        }
+    }
+
+    private String toRelativeFilePath(final Path basePath, final Path filePath) {
+        final Path relative = basePath.relativize(filePath.toAbsolutePath().normalize());
+        return relative.toString().replace(File.separatorChar, '/');
+    }
+
+    private Path resolveConfiguredPath(final String initParamName) {
+        final String configuredValue = getServletContext().getInitParameter(initParamName);
+        final Path appRootPath = getAppRootPath();
+
+        if (configuredValue == null || configuredValue.trim().isEmpty()) {
+            throw new IllegalStateException("Missing required servlet init-param: " + initParamName);
+        }
+
+        Path path = Paths.get(configuredValue.trim());
+        if (!path.isAbsolute()) {
+            path = appRootPath.resolve(path);
+        }
+        return path.toAbsolutePath().normalize();
+    }
+
+    private Path getAppRootPath() {
+        final String appRoot = getServletContext().getRealPath("");
+        if (appRoot == null || appRoot.trim().isEmpty()) {
+            return Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+        }
+        return Paths.get(appRoot).toAbsolutePath().normalize();
+    }
+
+    private boolean ensureAuthenticated(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+        final int userId = getSessionUserId(req);
+        if (userId != 0) {
+            return true;
+        }
+
+        if ("GET".equalsIgnoreCase(req.getMethod()) && !isAjaxRequest(req)) {
+            resp.sendRedirect(req.getContextPath() + "/login.jsp?error=session_expired");
+            return false;
+        }
+
+        sendJsonError(resp, "Session expired. Please login again.");
+        return false;
     }
 }

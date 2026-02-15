@@ -12,6 +12,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -34,6 +35,12 @@ public class PullbackServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         final PrintWriter out = response.getWriter();
         final JsonObject responseJson = new JsonObject();
+
+        if (!ensureAuthenticated(request, response, responseJson)) {
+            out.print(gson.toJson(responseJson));
+            out.flush();
+            return;
+        }
 
         final String path = request.getServletPath();
 
@@ -64,6 +71,12 @@ public class PullbackServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         final PrintWriter out = response.getWriter();
         final JsonObject responseJson = new JsonObject();
+
+        if (!ensureAuthenticated(request, response, responseJson)) {
+            out.print(gson.toJson(responseJson));
+            out.flush();
+            return;
+        }
 
         final String path = request.getServletPath();
 
@@ -457,5 +470,20 @@ public class PullbackServlet extends HttpServlet {
         } catch (final ParseException e) {
             return null;
         }
+    }
+
+    private boolean ensureAuthenticated(final HttpServletRequest request,
+                                        final HttpServletResponse response,
+                                        final JsonObject responseJson) {
+        final HttpSession session = request.getSession(false);
+        final Object userId = session != null ? session.getAttribute("userId") : null;
+        if (userId != null) {
+            return true;
+        }
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        responseJson.addProperty("status", "FAILURE");
+        responseJson.addProperty("message", "Session expired. Please login again.");
+        return false;
     }
 }

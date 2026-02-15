@@ -21,4 +21,5 @@ public class AppConstants {
     public static final String UPLOAD_BASE_QUOTATION = "D:\\PPC_DOCS\\Quotation";
     public static final String UPLOAD_BASE_CREDIT_NOTE = "D:\\PPC_DOCS\\CreditNote";
     public static final String UPLOAD_BASE_REPLACEMENT_REGISTER =  "D:\\PPC_DOCS\\ReplacementRegister";
+
 }

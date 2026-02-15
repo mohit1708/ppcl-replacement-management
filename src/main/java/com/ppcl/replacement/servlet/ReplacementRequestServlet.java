@@ -834,7 +834,7 @@ public class ReplacementRequestServlet extends BaseServlet {
             final Part filePart = request.getPart("quotationFile");
             if (filePart != null && filePart.getSize() > 0) {
                 FileUploadUtil.uploadFile(
-                        AppConstants.UPLOAD_BASE_QUOTATION,
+                        getServletContext().getInitParameter("quotation.dir"),
                         filePart,
                         "quotation_req_" + reqId
                 );

@@ -81,7 +81,6 @@ app/browser/demo.min.js
 
 
 #dist
-dist/
 html/
 docs/
 *.zip

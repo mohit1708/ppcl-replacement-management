@@ -15,8 +15,6 @@ import java.nio.file.Paths;
 @WebServlet("/signed-letter")
 public class SignedLetterDownloadServlet extends HttpServlet {
 
-    private static final String DEFAULT_SIGNED_OUTPUT_DIR = "/home/naruto/ppcl/signed_replacement_letter";
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String fileName = req.getParameter("file");
@@ -25,10 +23,7 @@ public class SignedLetterDownloadServlet extends HttpServlet {
             return;
         }
 
-        String outputDirParam = getServletContext().getInitParameter("dsc.signed.output.dir");
-        String outputDir = outputDirParam != null ? outputDirParam : DEFAULT_SIGNED_OUTPUT_DIR;
-
-        Path baseDir = Paths.get(outputDir).toAbsolutePath().normalize();
+        Path baseDir = resolveConfiguredPath("dsc.signed.output.dir");
         Path requested = baseDir.resolve(fileName).normalize();
         if (!requested.startsWith(baseDir)) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid file path");
@@ -59,5 +54,28 @@ public class SignedLetterDownloadServlet extends HttpServlet {
                 out.write(buffer, 0, read);
             }
         }
+    }
+
+    private Path resolveConfiguredPath(final String initParamName) {
+        final String configuredValue = getServletContext().getInitParameter(initParamName);
+        final Path appRootPath = getAppRootPath();
+
+        if (configuredValue == null || configuredValue.trim().isEmpty()) {
+            throw new IllegalStateException("Missing required servlet init-param: " + initParamName);
+        }
+
+        Path path = Paths.get(configuredValue.trim());
+        if (!path.isAbsolute()) {
+            path = appRootPath.resolve(path);
+        }
+        return path.toAbsolutePath().normalize();
+    }
+
+    private Path getAppRootPath() {
+        final String appRoot = getServletContext().getRealPath("");
+        if (appRoot == null || appRoot.trim().isEmpty()) {
+            return Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+        }
+        return Paths.get(appRoot).toAbsolutePath().normalize();
     }
 }

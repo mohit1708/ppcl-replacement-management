@@ -8,6 +8,15 @@
     <display-name>Replacement Management</display-name>
 
     <context-param>
+        <param-name>quotation.dir</param-name>
+        <param-value>/home/naruto/ppcl/quotation</param-value>
+    </context-param>
+    <context-param>
+        <param-name>credit_note.dir</param-name>
+        <param-value>/home/naruto/ppcl/credit_note</param-value>
+    </context-param>
+
+    <context-param>
         <param-name>dsc.windows.cert.alias</param-name>
         <param-value></param-value>
     </context-param>

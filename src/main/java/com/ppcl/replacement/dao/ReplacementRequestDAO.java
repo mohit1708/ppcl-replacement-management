@@ -209,7 +209,7 @@ public class ReplacementRequestDAO extends BaseDAO {
                         ps.setNull(10, Types.VARCHAR);
                         ps.setString(11, "MANUAL");
                     }
-
+                    ps.setInt(12,0);
                     ps.addBatch();
                 }
                 ps.executeBatch();

@@ -84,7 +84,7 @@ public class CreditNoteApprovalServlet extends BaseServlet {
         try {
             final Part filePart = request.getPart("creditNoteFile");
             if (filePart != null && filePart.getSize() > 0) {
-                documentPath = FileUploadUtil.uploadFile(AppConstants.UPLOAD_BASE_CREDIT_NOTE, filePart, "creditnote");
+                documentPath = FileUploadUtil.uploadFile(getServletContext().getInitParameter("credit_note.dir"), filePart, "creditnote");
             }
         } catch (final Exception e) {
             e.printStackTrace();

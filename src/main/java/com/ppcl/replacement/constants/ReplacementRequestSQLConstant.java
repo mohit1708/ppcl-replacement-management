@@ -207,9 +207,9 @@ public final class ReplacementRequestSQLConstant {
                     "  (REPLACEMENT_REQUEST_ID, AGR_PROD_ID, EXISTING_P_MODEL_ID, CLIENT_DOT_ID, " +
                     "   CONTACT_PERSON_NAME, CONTACT_PERSON_NUMBER, CONTACT_PERSON_EMAIL, " +
                     "   EXISTING_SERIAL, NEW_P_MODEL_SELECTED_ID, NEW_P_MODEL_SELECTED_TEXT, " +
-                    "   NEW_P_MODEL_SOURCE) " +
+                    "   NEW_P_MODEL_SOURCE,PRINTER_STAGE_ID) " +
                     "VALUES " +
-                    "  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 
     public static final String INSERT_COMMENT =
             "INSERT INTO RPLCE_COMMENTS_TRACKING (REPLACEMENT_REQUEST_ID, COMMENT_BY_USER_ID, COMMENTS) " +

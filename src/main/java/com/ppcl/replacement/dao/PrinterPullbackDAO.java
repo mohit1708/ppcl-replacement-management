@@ -599,7 +599,7 @@ public class PrinterPullbackDAO extends BaseDAO {
         pullback.setLocation(client.getBranch());                       // LOCATION from CLIENT
         pullback.setPrinterModel(printer.getExistingPModelId());        // P_MODEL (ID) from REPLACEMENT_PRINTER_DETAILS
         pullback.setSerialNo(printer.getExistingSerial());              // P_SERIAL_NO
-        pullback.setStatus(1);                                          // STATUS = 1
+        pullback.setStatus(0);                                          // STATUS = 1
 
         if (mapping != null) {
             // ── Scenario 1: Courier Pincode Mapping Exists ──
