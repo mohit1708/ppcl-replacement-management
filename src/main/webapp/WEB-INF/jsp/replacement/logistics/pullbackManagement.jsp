@@ -177,9 +177,8 @@
                                     <th>Client</th>
                                     <th>Serial</th>
                                     <th>Model</th>
-                                    <th>Picked</th>
-                                    <th>Dispatch</th>
-                                    <th>Status</th>
+                                    <th>Pickup By</th>
+                                    <th>Pickup Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -196,9 +195,8 @@
                                     <th>Client</th>
                                     <th>Serial</th>
                                     <th>Model</th>
-                                    <th>Picked</th>
-                                    <th>Dispatch</th>
-                                    <th>Status</th>
+                                    <th>Pickup By</th>
+                                    <th>Pickup Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -215,9 +213,8 @@
                                     <th>Client</th>
                                     <th>Serial</th>
                                     <th>Model</th>
-                                    <th>Picked</th>
-                                    <th>Dispatch</th>
-                                    <th>Status</th>
+                                    <th>Pickup By</th>
+                                    <th>Pickup Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -234,9 +231,8 @@
                                     <th>Client</th>
                                     <th>Serial</th>
                                     <th>Model</th>
-                                    <th>Picked</th>
-                                    <th>Dispatch</th>
-                                    <th>Status</th>
+                                    <th>Pickup By</th>
+                                    <th>Pickup Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -253,9 +249,8 @@
                                     <th>Client</th>
                                     <th>Serial</th>
                                     <th>Model</th>
-                                    <th>Picked</th>
-                                    <th>Dispatch</th>
-                                    <th>Status</th>
+                                    <th>Pickup By</th>
+                                    <th>Pickup Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -650,10 +645,12 @@
             pullbackDataMap = {};
 
             var allRows = data || [];
-            var pendingRows = allRows.filter(function(item) { return !item.status || item.status === 0; });
-            var receivedRows = allRows.filter(function(item) { return item.status === 1; });
-            var verifiedRows = allRows.filter(function(item) { return item.status === 2; });
-            var damagedRows = allRows.filter(function(item) { return item.status === 3; });
+            var pendingRows = allRows.filter(function(item) {
+                return getStatusKey(item) === 'to_be_picked' || getStatusKey(item) === 'to_be_dispatched' || getStatusKey(item) === 'in_transit';
+            });
+            var receivedRows = allRows.filter(function(item) { return getStatusKey(item) === 'received'; });
+            var verifiedRows = allRows.filter(function(item) { return getStatusKey(item) === 'qc_done'; });
+            var damagedRows = allRows.filter(function(item) { return getStatusKey(item) === 'pending_inventory'; });
 
             renderTableBody('#pullbackTableBodyAll', allRows);
             renderTableBody('#pullbackTableBodyPending', pendingRows);
@@ -689,15 +686,14 @@
             tbody.empty();
 
             if (!rows || rows.length === 0) {
-                tbody.append('<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No records found.</td></tr>');
+                tbody.append('<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No records found.</td></tr>');
                 return;
             }
 
             rows.forEach(function(item) {
                 pullbackDataMap[item.id] = item;
-                var badgeInfo = getStatusBadge(item.status);
                 var pickedByBadge = getPickedByBadge(item.pickedBy);
-                var dispatchInfo = getDispatchInfo(item);
+                var pickupStatusInfo = getPickupStatusInfo(item);
 
                 var row = '<tr>' +
                     '<td class="text-600 text-primary-d2">REQ-' + item.replacementReqId + '</td>' +
@@ -708,8 +704,7 @@
                     '<td><code class="text-dark-m2">' + (item.pSerialNo || '-') + '</code></td>' +
                     '<td title="' + (item.printerModelName || '-') + '"><span class="badge bgc-secondary-l2 text-secondary-d2 border-1 brc-secondary-m3 radius-1 text-truncate d-inline-block" style="max-width:100%;font-size:0.7rem;">' + (item.printerModelName || '-') + '</span></td>' +
                     '<td>' + pickedByBadge + '</td>' +
-                    '<td>' + dispatchInfo + '</td>' +
-                    '<td>' + badgeInfo + '</td>' +
+                    '<td>' + pickupStatusInfo + '</td>' +
                     '<td class="text-center">' + getActionButtons(item) + '</td>' +
                     '</tr>';
                 tbody.append(row);
@@ -724,7 +719,7 @@
                 scrollX: true,
                 scrollCollapse: true,
                 columnDefs: [
-                    { orderable: false, targets: [7] },
+                    { orderable: false, targets: [6] },
                     { className: "align-middle", targets: "_all" }
                 ],
                 drawCallback: function() {
@@ -751,54 +746,116 @@
             return '<span class="badge badge-md bgc-grey-l2 text-grey-d2 border-1 brc-grey-m3 radius-1">' + (pickedBy || '-') + '</span>';
         }
 
-        function getDispatchInfo(item) {
-            if (item.consignmentNo) {
-                return '<button class="btn btn-outline-info btn-xs radius-1 mr-1" onclick="showDispatchDetails(' + item.id + ')">' +
-                       '<i class="fas fa-truck mr-1"></i> ' + item.consignmentNo + '</button>';
-            } else if (item.dispatchDate) {
-                return '<button class="btn btn-outline-info btn-xs radius-1 mr-1" onclick="showDispatchDetails(' + item.id + ')">' +
-                       '<i class="fas fa-info-circle mr-1"></i> View</button>';
-            } else if (item.pullbackMode) {
-                return '<span class="text-85 text-grey-m1">' + item.pullbackMode + '</span>';
+        function getPickupStatusInfo(item) {
+            var statusMeta = resolvePickupStatus(item);
+            var statusClass = {
+                to_be_picked: 'bgc-grey-l2 text-grey-d2 border-1 brc-grey-m3',
+                to_be_dispatched: 'bgc-warning-l2 text-warning-d2 border-1 brc-warning-m3',
+                in_transit: 'bgc-primary-l2 text-primary-d2 border-1 brc-primary-m3',
+                received: 'bgc-success-l2 text-success-d2 border-1 brc-success-m3',
+                pending_inventory: 'bgc-orange-l2 text-orange-d2 border-1 brc-orange-m3',
+                qc_pending: 'bgc-info-l2 text-info-d2 border-1 brc-info-m3',
+                qc_done: 'bgc-success-l2 text-success-d2 border-1 brc-success-m3'
+            };
+
+            var html = '<span class="badge badge-md radius-1 ' + (statusClass[statusMeta.key] || statusClass.to_be_picked) + '">' +
+                       statusMeta.label + '</span>';
+
+            if (item.consignmentNo || item.dispatchDate || item.pullbackMode) {
+                html += ' <button class="btn btn-outline-info btn-xs radius-1 ml-1" title="View Dispatch Details" onclick="showDispatchDetails(' + item.id + ')">' +
+                        '<i class="fas fa-info-circle"></i></button>';
             }
-            return '<span class="text-85 text-grey-m2 italic">Awaiting</span>';
+            return html;
         }
 
-        function getStatusBadge(status) {
-            switch(status) {
-                case 1: 
-                    return '<span class="badge badge-lg bgc-success-l2 text-success-d2 border-1 brc-success-m3 radius-1 px-3">Received</span>';
-                case 2: 
-                    return '<span class="badge badge-lg bgc-info-l2 text-info-d2 border-1 brc-info-m3 radius-1 px-3">Verified</span>';
-                case 3: 
-                    return '<span class="badge badge-lg bgc-danger-l2 text-danger-d2 border-1 brc-danger-m3 radius-1 px-3">Damaged</span>';
-                default: 
-                    return '<span class="badge badge-lg bgc-warning-l2 text-warning-d2 border-1 brc-warning-m3 radius-1 px-3">Pending</span>';
+        function resolvePickupStatus(item) {
+            var statusName = ((item.statusName || '') + '').trim().toLowerCase();
+            if (statusName === 'to be picked') {
+                return { key: 'to_be_picked', label: 'To Be Picked' };
             }
+            if (statusName === 'to be dispatched') {
+                return { key: 'to_be_dispatched', label: 'To Be Dispatched' };
+            }
+            if (statusName === 'in transit') {
+                return { key: 'in_transit', label: 'In transit' };
+            }
+            if (statusName === 'received') {
+                return { key: 'received', label: 'Received' };
+            }
+            if (statusName === 'pending submission to inventory') {
+                return { key: 'pending_inventory', label: 'Pending Submission To Inventory' };
+            }
+            if (statusName === 'qc pending') {
+                return { key: 'qc_pending', label: 'QC Pending' };
+            }
+            if (statusName === 'qc done') {
+                return { key: 'qc_done', label: 'QC Done' };
+            }
+
+            // Backward-compatible fallback for old numeric status values.
+            if (item.status === 2) {
+                return { key: 'qc_done', label: 'QC Done' };
+            }
+            if (item.status === 1) {
+                return { key: 'received', label: 'Received' };
+            }
+            if (item.status === 3) {
+                return { key: 'pending_inventory', label: 'Pending Submission To Inventory' };
+            }
+            if (item.arrivalDate) {
+                return { key: 'received', label: 'Received' };
+            }
+            if (item.dispatchDate || item.consignmentNo || item.receipt) {
+                return { key: 'in_transit', label: 'In transit' };
+            }
+            if (item.pickedBy || item.pullbackMode) {
+                return { key: 'to_be_dispatched', label: 'To Be Dispatched' };
+            }
+            return { key: 'to_be_picked', label: 'To Be Picked' };
+        }
+
+        function getStatusKey(item) {
+            return resolvePickupStatus(item).key;
+        }
+
+        function getStatusBadge(item) {
+            var statusMeta = resolvePickupStatus(item);
+            var statusClass = {
+                to_be_picked: 'bgc-grey-l2 text-grey-d2 border-1 brc-grey-m3',
+                to_be_dispatched: 'bgc-warning-l2 text-warning-d2 border-1 brc-warning-m3',
+                in_transit: 'bgc-primary-l2 text-primary-d2 border-1 brc-primary-m3',
+                received: 'bgc-success-l2 text-success-d2 border-1 brc-success-m3',
+                pending_inventory: 'bgc-danger-l2 text-danger-d2 border-1 brc-danger-m3',
+                qc_pending: 'bgc-info-l2 text-info-d2 border-1 brc-info-m3',
+                qc_done: 'bgc-success-l2 text-success-d2 border-1 brc-success-m3'
+            };
+            return '<span class="badge badge-lg radius-1 px-3 ' + (statusClass[statusMeta.key] || statusClass.to_be_picked) + '">' +
+                   statusMeta.label + '</span>';
         }
 
         function getActionButtons(item) {
             var buttons = '<div class="action-buttons">';
+            var statusKey = getStatusKey(item);
             
                 buttons += '<button class="btn btn-outline-primary btn-action" title="View Cartridges" onclick="viewCartridges(' + 
                        item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' + 
                        (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
                        '<i class="fas fa-boxes mr-1"></i>Cartridges</button>';
 
-            if (!item.status || item.status === 0) {
+            if (statusKey === 'to_be_picked' || statusKey === 'to_be_dispatched' || statusKey === 'in_transit') {
                 buttons += '<button class="btn btn-outline-success btn-action" title="Mark Received" onclick="markReceived(' + 
                            item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
                            '<i class="fas fa-check mr-1"></i>Recv</button>';
             }
 
-            if (item.status === 1) {
+            if (statusKey === 'received' || statusKey === 'qc_pending') {
                 buttons += '<button class="btn btn-outline-warning btn-action" title="Verify Cartridge" onclick="verifyCartridge(' + 
                            item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' + 
                            (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
                            '<i class="fas fa-clipboard-check mr-1"></i>Verify</button>';
             }
 
-            if (item.status >= 1) {
+            if (statusKey !== 'to_be_picked' && statusKey !== 'to_be_dispatched' && statusKey !== 'in_transit') {
                 buttons += '<button class="btn btn-outline-danger btn-action" title="Credit Note" onclick="triggerCreditNote(' + 
                            item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
                            '<i class="fas fa-file-invoice-dollar mr-1"></i>CN</button>';
