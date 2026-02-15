@@ -74,6 +74,18 @@
                     </li>
                     </c:if>
 
+
+                    <!-- COURIER -->
+                    <li class="nav-item-caption">
+                        <span class="nav-text text-uppercase text-80 text-grey-m2">COURIER</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/views/replacement/courier-login/page">
+                            <i class="nav-icon fas fa-user-lock"></i>
+                            <span class="nav-text fadeable">Generate Courier Login</span>
+                        </a>
+                    </li>
+
                     <!-- LOGISTICS SECTION -->
                     <li class="nav-item-caption">
                         <span class="nav-text text-uppercase text-80 text-grey-m2">LOGISTICS</span>
