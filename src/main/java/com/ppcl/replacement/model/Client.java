@@ -2,6 +2,7 @@ package com.ppcl.replacement.model;
 
 public class Client {
     private int id;
+    private int brId;
     private String clientId;
     private String name;
     private String branch;
@@ -128,4 +129,13 @@ public class Client {
     public void setDbsCategory(final String dbsCategory) {
         this.dbsCategory = dbsCategory;
     }
+
+        public int getBrId() {
+        return brId;
+    }
+
+    public void setBrId(int brId) {
+        this.brId = brId;
+    }
+
 }
