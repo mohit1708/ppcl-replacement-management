@@ -87,7 +87,9 @@ public class CourierLoginDAO extends BaseDAO {
                    rp.CLIENT_DOT_ID,
                    pm.MODEL_NAME AS PRINTER_MODEL_NAME,
                    cl.CONTACT_PERSON AS CLIENT_CONTACT_PERSON,
-                   cl.NAME AS CLIENT_NAME
+                   cl.NAME AS CLIENT_NAME,
+                   cl.ADDRESS AS CLIENT_ADDRESS,
+                   cl.MOBILE_NO AS CLIENT_CONTACT_NUMBER
             FROM REPLACEMENT_PULLBACK rp
             LEFT JOIN P_MODEL pm ON pm.ID = rp.P_MODEL
             LEFT JOIN CLIENT cl ON cl.ID = rp.CLIENT_DOT_ID
@@ -328,6 +330,8 @@ public class CourierLoginDAO extends BaseDAO {
         pb.setPrinterModelName(rs.getString("PRINTER_MODEL_NAME"));
         pb.setContactPerson(rs.getString("CLIENT_CONTACT_PERSON"));
         pb.setClientName(rs.getString("CLIENT_NAME"));
+        pb.setClientAddress(rs.getString("CLIENT_ADDRESS"));
+        pb.setClientContactNumber(rs.getString("CLIENT_CONTACT_NUMBER"));
 
         final int emptyCart = rs.getInt("EMPTY_CARTRIDGE");
         pb.setEmptyCartridge(rs.wasNull() ? null : emptyCart);
