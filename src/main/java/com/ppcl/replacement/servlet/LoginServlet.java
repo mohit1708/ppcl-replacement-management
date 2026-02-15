@@ -41,6 +41,8 @@ public class LoginServlet extends HttpServlet {
                 // Set role-based access flags for menu visibility
                 session.setAttribute("isCRO", userDAO.isCRO(user.getId()));
                 session.setAttribute("isTLSupport", userDAO.isTLSupport(user.getId()));
+                session.setAttribute("isTLOrAbove", userDAO.isTLOrAbove(user.getId()));
+                session.setAttribute("isRoleForCourierLoginValid", userDAO.isRoleForCourierLoginValid(user.getId()));
                 session.setAttribute("isTLLead", userDAO.isTLLead(user.getId()));
                 session.setAttribute("isAMManager", userDAO.isAMManager(user.getId()));
                 session.setAttribute("isAccountBillingUser", userDAO.isAccountBillingUser(user.getId()));

@@ -495,8 +495,8 @@ public class WhatsAppMessageSender {
 		String message = "";
 		try {
 			String phoneNumberId = "918879112211";
-			String accessToken = "b42b413d-5017-11ef-ad4f-92672d2d0c2d";
-			String apiUrl = "https://partners.pinbot.ai/v2/messages";
+			String accessToken = "ee9a9362-c373-11f0-98fc-02c8a5e042bd";
+			String apiUrl = "https://partnersv1.pinbot.ai/v3/405353099321184/messages";
 
 			String link = COURIER_BASE_URL + "/CourierLoginOtp.do?courierId=" + EncryptionUtil.encrypt(courierId);
 
@@ -576,8 +576,8 @@ public class WhatsAppMessageSender {
 		String message = "";
 		try {
 			String phoneNumberId = "918879112211";
-			String accessToken = "b42b413d-5017-11ef-ad4f-92672d2d0c2d";
-			String apiUrl = "https://partners.pinbot.ai/v2/messages";
+			String accessToken = "ee9a9362-c373-11f0-98fc-02c8a5e042bd";
+			String apiUrl = "https://partnersv1.pinbot.ai/v3/405353099321184/messages";
 
 			String link = COURIER_BASE_URL + "/CourierLoginOtp.do?courierId=" + EncryptionUtil.encrypt(courierId);
 

@@ -68,11 +68,11 @@ public class UserBootstrapFilter implements Filter {
         session.setAttribute("userName", user.getName());
         session.setAttribute("userRole", user.getRole());
         session.setAttribute("currentUser", user);
-
         try {
         session.setAttribute("isCRO", userDAO.isCRO(user.getId()));
         session.setAttribute("isTLSupport", userDAO.isTLSupport(user.getId()));
-
+        session.setAttribute("isRoleForCourierLoginValid", userDAO.isRoleForCourierLoginValid(user.getId()));
+        session.setAttribute("isTLOrAbove", userDAO.isTLOrAbove(user.getId()));
         session.setAttribute("isTLLead", userDAO.isTLLead(user.getId()));
         session.setAttribute("isAMManager", userDAO.isAMManager(user.getId()));
         session.setAttribute("isAccountBillingUser", userDAO.isAccountBillingUser(user.getId()));
@@ -83,4 +83,5 @@ public class UserBootstrapFilter implements Filter {
 
         chain.doFilter(request, response);
     }
+
 }

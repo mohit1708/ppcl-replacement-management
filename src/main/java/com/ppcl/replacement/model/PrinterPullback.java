@@ -34,6 +34,8 @@ public class PrinterPullback {
 
     // Display fields (joined from other tables)
     private String clientName;
+    private String clientAddress;
+    private String clientContactNumber;
     private String printerModelName;
     private String statusName;
     private String replacementReqNo;
@@ -252,6 +254,22 @@ public class PrinterPullback {
 
     public void setClientName(final String clientName) {
         this.clientName = clientName;
+    }
+
+    public String getClientAddress() {
+        return clientAddress;
+    }
+
+    public void setClientAddress(final String clientAddress) {
+        this.clientAddress = clientAddress;
+    }
+
+    public String getClientContactNumber() {
+        return clientContactNumber;
+    }
+
+    public void setClientContactNumber(final String clientContactNumber) {
+        this.clientContactNumber = clientContactNumber;
     }
 
     public String getPrinterModelName() {

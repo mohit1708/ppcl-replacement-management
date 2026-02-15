@@ -4,7 +4,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
                         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
-        version="6.0">
+        version="6.0" metadata-complete="true">
     <display-name>Replacement Management</display-name>
 
     <context-param>
@@ -44,20 +44,295 @@
     </servlet-mapping>
 
 
-    <!--    <servlet><servlet-name>DashboardServlet</servlet-name><servlet-class>com.ppcl.replacement.servlet.DashboardServlet</servlet-class></servlet>-->
-    <!--    <servlet-mapping><servlet-name>DashboardServlet</servlet-name><url-pattern>/views/replacement/dashboard</url-pattern></servlet-mapping>-->
+    <!-- LogoutServlet -->
+    <servlet>
+        <servlet-name>LogoutServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.LogoutServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LogoutServlet</servlet-name>
+        <url-pattern>/logout</url-pattern>
+    </servlet-mapping>
 
-    <!--    <servlet><servlet-name>ReplacementRequestServlet</servlet-name><servlet-class>com.ppcl.replacement.servlet.ReplacementRequestServlet</servlet-class></servlet>-->
-    <!--    <servlet-mapping><servlet-name>ReplacementRequestServlet</servlet-name><url-pattern>/views/replacement/request</url-pattern></servlet-mapping>-->
+    <!-- DashboardServlet -->
+    <servlet>
+        <servlet-name>DashboardServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.DashboardServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DashboardServlet</servlet-name>
+        <url-pattern>/views/replacement/dashboard</url-pattern>
+        <url-pattern>/views/replacement/dashboard/kpi</url-pattern>
+        <url-pattern>/views/replacement/dashboard/requests</url-pattern>
+        <url-pattern>/views/replacement/dashboard/printers</url-pattern>
+        <url-pattern>/views/replacement/dashboard/summary</url-pattern>
+        <url-pattern>/views/replacement/dashboard/export</url-pattern>
+        <url-pattern>/views/replacement/dashboard/filters</url-pattern>
+        <url-pattern>/views/replacement/dashboard/events</url-pattern>
+    </servlet-mapping>
 
-    <!--    <servlet>-->
-    <!--        <servlet-name>PrinterOrderServlet</servlet-name>-->
-    <!--        <servlet-class>com.ppcl.replacement.servlet.PrinterOrderServlet</servlet-class>-->
-    <!--    </servlet>-->
-    <!--    <servlet-mapping>-->
-    <!--        <servlet-name>PrinterOrderServlet</servlet-name>-->
-    <!--        <url-pattern>/views/replacement/myRequests</url-pattern>-->
-    <!--    </servlet-mapping>-->
+    <!-- ReplacementRequestServlet -->
+    <servlet>
+        <servlet-name>ReplacementRequestServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.ReplacementRequestServlet</servlet-class>
+        <multipart-config>
+            <file-size-threshold>1048576</file-size-threshold>
+            <max-file-size>10485760</max-file-size>
+            <max-request-size>15728640</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReplacementRequestServlet</servlet-name>
+        <url-pattern>/views/replacement/request</url-pattern>
+    </servlet-mapping>
+
+    <!-- ReplacementRegisterServlet -->
+    <servlet>
+        <servlet-name>ReplacementRegisterServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.ReplacementRegisterServlet</servlet-class>
+        <multipart-config>
+            <file-size-threshold>1048576</file-size-threshold>
+            <max-file-size>26214400</max-file-size>
+            <max-request-size>31457280</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReplacementRegisterServlet</servlet-name>
+        <url-pattern>/views/replacement/register</url-pattern>
+    </servlet-mapping>
+
+    <!-- PrinterOrderServlet -->
+    <servlet>
+        <servlet-name>PrinterOrderServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.PrinterOrderServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PrinterOrderServlet</servlet-name>
+        <url-pattern>/views/replacement/myRequests</url-pattern>
+    </servlet-mapping>
+
+    <!-- PrinterOrderStatusServlet -->
+    <servlet>
+        <servlet-name>PrinterOrderStatusServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.PrinterOrderStatusServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PrinterOrderStatusServlet</servlet-name>
+        <url-pattern>/printerOrder/status</url-pattern>
+    </servlet-mapping>
+
+    <!-- PrinterBookingServlet -->
+    <servlet>
+        <servlet-name>PrinterBookingServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.PrinterBookingServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PrinterBookingServlet</servlet-name>
+        <url-pattern>/views/replacement/am/printerBooking</url-pattern>
+        <url-pattern>/views/replacement/am/bookPrinterOrder</url-pattern>
+    </servlet-mapping>
+
+    <!-- PrinterPullbackServlet -->
+    <servlet>
+        <servlet-name>PrinterPullbackServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.PrinterPullbackServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PrinterPullbackServlet</servlet-name>
+        <url-pattern>/views/replacement/logistics/pullbackManagement</url-pattern>
+        <url-pattern>/views/wm/markReceived</url-pattern>
+    </servlet-mapping>
+
+    <!-- ReplacementTLServlet -->
+    <servlet>
+        <servlet-name>ReplacementTLServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.ReplacementTLServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReplacementTLServlet</servlet-name>
+        <url-pattern>/views/replacement/tl/requestList</url-pattern>
+        <url-pattern>/views/replacement/tl/getPrinterDetails</url-pattern>
+        <url-pattern>/views/replacement/tl/getPrinterHistory</url-pattern>
+        <url-pattern>/views/replacement/tl/getFilterData</url-pattern>
+        <url-pattern>/views/replacement/tl/updateRecommendation</url-pattern>
+        <url-pattern>/views/replacement/tl/action</url-pattern>
+    </servlet-mapping>
+
+    <!-- ReplacementAMManagerServlet -->
+    <servlet>
+        <servlet-name>ReplacementAMManagerServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.ReplacementAMManagerServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReplacementAMManagerServlet</servlet-name>
+        <url-pattern>/views/replacement/ammanager/requestList</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getFullRequest</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getPrinterDetails</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getPrinterHistory</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getCurrentCommercials</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getCommercialDetails</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getCommunicationLogs</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getHierarchyUsers</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getFilterData</url-pattern>
+        <url-pattern>/views/replacement/ammanager/replyRequest</url-pattern>
+        <url-pattern>/views/replacement/ammanager/rejectRequest</url-pattern>
+        <url-pattern>/views/replacement/ammanager/forwardRequest</url-pattern>
+        <url-pattern>/views/replacement/ammanager/approveRequest</url-pattern>
+        <url-pattern>/views/replacement/ammanager/submitRequest</url-pattern>
+        <url-pattern>/views/replacement/ammanager/updateRecommendation</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getPrinterModels</url-pattern>
+        <url-pattern>/views/replacement/ammanager/getCommercialByRequest</url-pattern>
+    </servlet-mapping>
+
+    <!-- CreditNoteApprovalServlet -->
+    <servlet>
+        <servlet-name>CreditNoteApprovalServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.CreditNoteApprovalServlet</servlet-class>
+        <multipart-config>
+            <file-size-threshold>1048576</file-size-threshold>
+            <max-file-size>10485760</max-file-size>
+            <max-request-size>15728640</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CreditNoteApprovalServlet</servlet-name>
+        <url-pattern>/views/replacement/accounts/creditNoteApproval</url-pattern>
+    </servlet-mapping>
+
+    <!-- CourierPincodeMappingServlet -->
+    <servlet>
+        <servlet-name>CourierPincodeMappingServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.CourierPincodeMappingServlet</servlet-class>
+        <multipart-config>
+            <file-size-threshold>1048576</file-size-threshold>
+            <max-file-size>10485760</max-file-size>
+            <max-request-size>15728640</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CourierPincodeMappingServlet</servlet-name>
+        <url-pattern>/views/replacement/courier-pincode/page</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/couriers</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/mappings</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/add</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/upload</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/edit</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/toggleStatus</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/export</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/template</url-pattern>
+        <url-pattern>/views/replacement/courier-pincode/getMappingById</url-pattern>
+    </servlet-mapping>
+
+    <!-- CourierLoginManagementServlet -->
+    <servlet>
+        <servlet-name>CourierLoginManagementServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.CourierLoginManagementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CourierLoginManagementServlet</servlet-name>
+        <url-pattern>/views/replacement/courier-login/page</url-pattern>
+        <url-pattern>/views/replacement/courier-login/list</url-pattern>
+        <url-pattern>/views/replacement/courier-login/generate</url-pattern>
+        <url-pattern>/views/replacement/courier-login/resend</url-pattern>
+    </servlet-mapping>
+
+    <!-- CourierLoginServlet -->
+    <servlet>
+        <servlet-name>CourierLoginServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.CourierLoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CourierLoginServlet</servlet-name>
+        <url-pattern>/CourierLoginOtp.do</url-pattern>
+        <url-pattern>/CourierForgotPassword.do</url-pattern>
+        <url-pattern>/CourierVerifyOtp.do</url-pattern>
+        <url-pattern>/CourierResetPassword.do</url-pattern>
+        <url-pattern>/CourierUpdatePassword.do</url-pattern>
+        <url-pattern>/CourierLogout.do</url-pattern>
+    </servlet-mapping>
+
+    <!-- CourierAssignedServlet -->
+    <servlet>
+        <servlet-name>CourierAssignedServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.CourierAssignedServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CourierAssignedServlet</servlet-name>
+        <url-pattern>/CourierAssigned.do</url-pattern>
+    </servlet-mapping>
+
+    <!-- SignedLetterDownloadServlet -->
+    <servlet>
+        <servlet-name>SignedLetterDownloadServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.SignedLetterDownloadServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SignedLetterDownloadServlet</servlet-name>
+        <url-pattern>/signed-letter</url-pattern>
+    </servlet-mapping>
+
+    <!-- AMReplacementLetter -->
+    <servlet>
+        <servlet-name>AMReplacementLetter</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.AMReplacementLetter</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AMReplacementLetter</servlet-name>
+        <url-pattern>/am/replacementLetter</url-pattern>
+    </servlet-mapping>
+
+    <!-- MobilePageCountServlet -->
+    <servlet>
+        <servlet-name>MobilePageCountServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.MobilePageCountServlet</servlet-class>
+        <multipart-config/>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>MobilePageCountServlet</servlet-name>
+        <url-pattern>/mobile/pageCount</url-pattern>
+    </servlet-mapping>
+
+    <!-- PickupChecklistServlet -->
+    <servlet>
+        <servlet-name>PickupChecklistServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.PickupChecklistServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PickupChecklistServlet</servlet-name>
+        <url-pattern>/pickup/checklist</url-pattern>
+    </servlet-mapping>
+
+    <!-- PullbackServlet -->
+    <servlet>
+        <servlet-name>PullbackServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.PullbackServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PullbackServlet</servlet-name>
+        <url-pattern>/api/pullback</url-pattern>
+        <url-pattern>/api/pullback/list</url-pattern>
+        <url-pattern>/api/pullback/action</url-pattern>
+    </servlet-mapping>
+
+    <!-- AMActionServlet -->
+    <servlet>
+        <servlet-name>AMActionServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.AMActionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AMActionServlet</servlet-name>
+        <url-pattern>/views/replacement/am/action</url-pattern>
+    </servlet-mapping>
+
+    <!-- ServiceTLActionServlet -->
+    <servlet>
+        <servlet-name>ServiceTLActionServlet</servlet-name>
+        <servlet-class>com.ppcl.replacement.servlet.ServiceTLActionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ServiceTLActionServlet</servlet-name>
+        <url-pattern>/views/replacement/serviceTL/action</url-pattern>
+    </servlet-mapping>
 
     <welcome-file-list>
         <welcome-file>login.jsp</welcome-file>
