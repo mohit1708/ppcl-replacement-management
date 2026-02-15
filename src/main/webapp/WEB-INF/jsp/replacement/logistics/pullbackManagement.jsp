@@ -179,7 +179,6 @@
                                     <th>Model</th>
                                     <th>Picked</th>
                                     <th>Dispatch</th>
-                                    <th>Cart.</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -199,7 +198,6 @@
                                     <th>Model</th>
                                     <th>Picked</th>
                                     <th>Dispatch</th>
-                                    <th>Cart.</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -219,7 +217,6 @@
                                     <th>Model</th>
                                     <th>Picked</th>
                                     <th>Dispatch</th>
-                                    <th>Cart.</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -239,7 +236,6 @@
                                     <th>Model</th>
                                     <th>Picked</th>
                                     <th>Dispatch</th>
-                                    <th>Cart.</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -259,7 +255,6 @@
                                     <th>Model</th>
                                     <th>Picked</th>
                                     <th>Dispatch</th>
-                                    <th>Cart.</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -282,33 +277,38 @@
 
 <!-- View Cartridges Modal -->
     <div class="modal fade" id="cartridgesModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered modal-md">
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title"><i class="fas fa-boxes mr-2"></i>Cartridges to be Picked</h5>
+                    <h5 class="modal-title"><i class="fas fa-boxes mr-2"></i>Cartridge Pickup Details</h5>
                     <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <strong>Replacement ID:</strong> <span id="cartReqId">-</span>
+                    <div class="cart-meta-grid">
+                        <div class="cart-meta-item">
+                            <small class="text-muted d-block">Replacement ID</small>
+                            <strong id="cartReqId">-</strong>
                         </div>
-                        <div class="col-6">
-                            <strong>Serial No:</strong> <span id="cartSerialNo">-</span>
+                        <div class="cart-meta-item">
+                            <small class="text-muted d-block">Serial No</small>
+                            <strong id="cartSerialNo">-</strong>
                         </div>
                     </div>
-                    <div class="cartridge-info">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-fill-drip text-warning mr-2"></i>
-                                <strong>Empty Cartridges:</strong>
-                                <span class="badge badge-warning ml-2" id="emptyCartridges">0</span>
+
+                    <div class="cart-count-grid mt-3">
+                        <div class="cart-count-card empty">
+                            <div class="cart-count-head">
+                                <i class="fas fa-fill-drip mr-2"></i>
+                                <span>Empty Cartridges</span>
                             </div>
-                            <div class="col-6">
-                                <i class="fas fa-fill text-success mr-2"></i>
-                                <strong>Unused Cartridges:</strong>
-                                <span class="badge badge-success ml-2" id="unusedCartridges">0</span>
+                            <div class="cart-count-value" id="emptyCartridges">0</div>
+                        </div>
+                        <div class="cart-count-card unused">
+                            <div class="cart-count-head">
+                                <i class="fas fa-fill mr-2"></i>
+                                <span>Unused Cartridges</span>
                             </div>
+                            <div class="cart-count-value" id="unusedCartridges">0</div>
                         </div>
                     </div>
                 </div>
@@ -689,14 +689,13 @@
             tbody.empty();
 
             if (!rows || rows.length === 0) {
-                tbody.append('<tr><td colspan="9" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No records found.</td></tr>');
+                tbody.append('<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No records found.</td></tr>');
                 return;
             }
 
             rows.forEach(function(item) {
                 pullbackDataMap[item.id] = item;
                 var badgeInfo = getStatusBadge(item.status);
-                var cartridgeTotal = (item.emptyCartridge || 0) + (item.unusedCartridge || 0);
                 var pickedByBadge = getPickedByBadge(item.pickedBy);
                 var dispatchInfo = getDispatchInfo(item);
 
@@ -710,7 +709,6 @@
                     '<td title="' + (item.printerModelName || '-') + '"><span class="badge bgc-secondary-l2 text-secondary-d2 border-1 brc-secondary-m3 radius-1 text-truncate d-inline-block" style="max-width:100%;font-size:0.7rem;">' + (item.printerModelName || '-') + '</span></td>' +
                     '<td>' + pickedByBadge + '</td>' +
                     '<td>' + dispatchInfo + '</td>' +
-                    '<td><span class="badge badge-lg bgc-info-l2 text-info-d2 border-1 brc-info-m3 radius-1">' + cartridgeTotal + '</span></td>' +
                     '<td>' + badgeInfo + '</td>' +
                     '<td class="text-center">' + getActionButtons(item) + '</td>' +
                     '</tr>';
@@ -726,7 +724,7 @@
                 scrollX: true,
                 scrollCollapse: true,
                 columnDefs: [
-                    { orderable: false, targets: [8] },
+                    { orderable: false, targets: [7] },
                     { className: "align-middle", targets: "_all" }
                 ],
                 drawCallback: function() {
@@ -782,10 +780,10 @@
         function getActionButtons(item) {
             var buttons = '<div class="action-buttons">';
             
-            buttons += '<button class="btn btn-outline-primary btn-action" title="View Cartridges" onclick="viewCartridges(' + 
+                buttons += '<button class="btn btn-outline-primary btn-action" title="View Cartridges" onclick="viewCartridges(' + 
                        item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' + 
                        (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
-                       '<i class="fas fa-boxes mr-1"></i>Cart.</button>';
+                       '<i class="fas fa-boxes mr-1"></i>Cartridges</button>';
 
             if (!item.status || item.status === 0) {
                 buttons += '<button class="btn btn-outline-success btn-action" title="Mark Received" onclick="markReceived(' + 
@@ -1017,6 +1015,75 @@
 
     .location-section {
         animation: fadeIn 0.5s ease;
+    }
+
+    #cartridgesModal .modal-content {
+        border: 0;
+        border-radius: 0.8rem;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+        overflow: hidden;
+    }
+
+    #cartridgesModal .modal-header {
+        border-bottom: 0;
+    }
+
+    .cart-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .cart-meta-item {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 0.65rem 0.8rem;
+    }
+
+    .cart-count-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+    }
+
+    .cart-count-card {
+        border-radius: 0.65rem;
+        padding: 0.8rem;
+        border: 1px solid;
+    }
+
+    .cart-count-card.empty {
+        background: #fff8e6;
+        border-color: #ffe4a6;
+        color: #9a6700;
+    }
+
+    .cart-count-card.unused {
+        background: #ecfdf3;
+        border-color: #bbf7d0;
+        color: #166534;
+    }
+
+    .cart-count-head {
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .cart-count-value {
+        font-size: 1.7rem;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-top: 0.35rem;
+    }
+
+    @media (max-width: 576px) {
+        .cart-meta-grid,
+        .cart-count-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     @keyframes fadeIn {

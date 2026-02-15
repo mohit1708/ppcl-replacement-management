@@ -126,7 +126,9 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
-                       p.TRAY, p.EMPTY_CARTRIDGE, p.UNUSED_CARTRIDGE, p.PULLBACK_MODE,
+                       p.TRAY, p.EMPTY_CARTRIDGE,
+                       poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
+                       p.PULLBACK_MODE,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -134,6 +136,8 @@ public class PrinterPullbackDAO extends BaseDAO {
                 FROM REPLACEMENT_PULLBACK p
                 LEFT JOIN CLIENT c ON c.ID = p.CLIENT_DOT_ID
                 LEFT JOIN P_MODEL pm ON pm.ID = p.P_MODEL
+                LEFT JOIN REPLACEMENT_PRINTER_DETAILS rpd ON rpd.ID = p.REPLACEMENT_PRINTER_DETAILS_ID
+                LEFT JOIN PRINTER_ORDER_ITEM poi ON poi.ID = rpd.PRINTER_ORDER_ITEM_ID
                 WHERE p.REPLACEMENT_REQ_ID = ?
                 """);
 
@@ -225,7 +229,9 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
-                       p.TRAY, p.EMPTY_CARTRIDGE, p.UNUSED_CARTRIDGE, p.PULLBACK_MODE,
+                       p.TRAY, p.EMPTY_CARTRIDGE,
+                       poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
+                       p.PULLBACK_MODE,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -233,6 +239,8 @@ public class PrinterPullbackDAO extends BaseDAO {
                 FROM REPLACEMENT_PULLBACK p
                 LEFT JOIN CLIENT c ON c.ID = p.CLIENT_DOT_ID
                 LEFT JOIN P_MODEL pm ON pm.ID = p.P_MODEL
+                LEFT JOIN REPLACEMENT_PRINTER_DETAILS rpd ON rpd.ID = p.REPLACEMENT_PRINTER_DETAILS_ID
+                LEFT JOIN PRINTER_ORDER_ITEM poi ON poi.ID = rpd.PRINTER_ORDER_ITEM_ID
                 ORDER BY p.ID DESC
                 """;
 
@@ -261,7 +269,9 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
-                       p.TRAY, p.EMPTY_CARTRIDGE, p.UNUSED_CARTRIDGE, p.PULLBACK_MODE,
+                       p.TRAY, p.EMPTY_CARTRIDGE,
+                       poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
+                       p.PULLBACK_MODE,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -269,6 +279,8 @@ public class PrinterPullbackDAO extends BaseDAO {
                 FROM REPLACEMENT_PULLBACK p
                 LEFT JOIN CLIENT c ON c.ID = p.CLIENT_DOT_ID
                 LEFT JOIN P_MODEL pm ON pm.ID = p.P_MODEL
+                LEFT JOIN REPLACEMENT_PRINTER_DETAILS rpd ON rpd.ID = p.REPLACEMENT_PRINTER_DETAILS_ID
+                LEFT JOIN PRINTER_ORDER_ITEM poi ON poi.ID = rpd.PRINTER_ORDER_ITEM_ID
                 WHERE p.ID = ?
                 """;
 
@@ -365,7 +377,9 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
-                       p.TRAY, p.EMPTY_CARTRIDGE, p.UNUSED_CARTRIDGE, p.PULLBACK_MODE,
+                       p.TRAY, p.EMPTY_CARTRIDGE,
+                       poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
+                       p.PULLBACK_MODE,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -373,6 +387,8 @@ public class PrinterPullbackDAO extends BaseDAO {
                 FROM REPLACEMENT_PULLBACK p
                 LEFT JOIN CLIENT c ON c.ID = p.CLIENT_DOT_ID
                 LEFT JOIN P_MODEL pm ON pm.ID = p.P_MODEL
+                LEFT JOIN REPLACEMENT_PRINTER_DETAILS rpd ON rpd.ID = p.REPLACEMENT_PRINTER_DETAILS_ID
+                LEFT JOIN PRINTER_ORDER_ITEM poi ON poi.ID = rpd.PRINTER_ORDER_ITEM_ID
                 WHERE 1=1
                 """);
 
