@@ -112,7 +112,7 @@
         const replaceExisting = $('input[name="replaceExisting"]:checked').val();
 
         if (!replaceExisting) {
-            alert('Please select Yes or No for replacement option');
+            showAppAlert('Please select Yes or No for replacement option', 'warning');
             return;
         }
 
@@ -144,7 +144,7 @@
 
         // Validation
         if (replyData.selectedPrinterCount === 0) {
-            alert('Please select at least one printer to reply for');
+            showAppAlert('Please select at least one printer to reply for', 'warning');
             return;
         }
 
@@ -152,7 +152,7 @@
         if (replaceExisting === 'No') {
             for (let serial in replyData.printerComments) {
                 if (!replyData.printerComments[serial].comment) {
-                    alert('Commercial comments are mandatory for all selected printers when replying "No"');
+                    showAppAlert('Commercial comments are mandatory for all selected printers when replying "No"', 'warning');
                     return;
                 }
             }
@@ -169,12 +169,12 @@
             success: function(response) {
                 console.log("✅ replyRequest success:", response);
                 if (response.success) {
-                    alert(response.message);
+                    showAppAlert(response.message, 'success');
                     $('#replyModal').modal('hide');
                     $('#fullRequestModal').modal('hide');
-                    location.reload();
+                    setTimeout(function() { location.reload(); }, 10000);
                 } else {
-                    alert('Error: ' + response.message);
+                    showAppAlert('Error: ' + response.message, 'danger');
                 }
             },
             error: function(xhr, status, error) {
@@ -199,15 +199,15 @@
                     success: function(response) {
                         console.log("✅ replyRequest success (form data):", response);
                         if (response.success) {
-                            alert(response.message);
+                            showAppAlert(response.message, 'success');
                             $('#replyModal').modal('hide');
                             $('#fullRequestModal').modal('hide');
-                            location.reload();
+                            setTimeout(function() { location.reload(); }, 10000);
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error("❌ Final error:", error);
-                        alert('Error submitting reply: ' + error);
+                        showAppAlert('Error submitting reply: ' + error, 'danger');
                     }
                 });
             }

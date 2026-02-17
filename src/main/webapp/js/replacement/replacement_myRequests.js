@@ -192,15 +192,15 @@ function saveEditRequest() {
         success: function(resp) {
             if (resp.success) {
                 $('#editRequestModal').modal('hide');
-                alert('✅ Request updated successfully!');
-                location.reload();
+                showAppAlert('Request updated successfully!', 'success');
+                setTimeout(function() { location.reload(); }, 10000);
             } else {
-                alert('❌ Failed: ' + (resp.message || 'Unknown error'));
+                showAppAlert((resp.message || 'Unknown error'), 'danger');
                 $('#btnSaveEdit').prop('disabled', false).html('<i class="fas fa-save"></i> Save Changes');
             }
         },
         error: function() {
-            alert('❌ Network error. Please try again.');
+            showAppAlert('Network error. Please try again.', 'danger');
             $('#btnSaveEdit').prop('disabled', false).html('<i class="fas fa-save"></i> Save Changes');
         }
     });
@@ -218,23 +218,21 @@ function escapeHtml(text) {
 
 function sendRemind(reqId, ownerName, stageName) {
     var msg = "Send reminder to " + (ownerName || "the stage owner") + " for " + (stageName || "current stage") + "?";
-    if (!confirm(msg)) {
-        return;
-    }
-
-    $.post(
-        contextPath + '/views/replacement/request',
-        { action: 'remind', reqId: reqId },
-        function (resp) {
-            if (resp.success) {
-                alert("✅ Reminder sent successfully!");
-            } else {
-                alert("❌ Failed: " + (resp.message || "Unknown error"));
-            }
-        },
-        'json'
-    ).fail(function() {
-        alert("❌ Network error. Please try again.");
+    showAppConfirm(msg, function() {
+        $.post(
+            contextPath + '/views/replacement/request',
+            { action: 'remind', reqId: reqId },
+            function (resp) {
+                if (resp.success) {
+                    showAppAlert("Reminder sent successfully!", 'success');
+                } else {
+                    showAppAlert((resp.message || "Unknown error"), 'danger');
+                }
+            },
+            'json'
+        ).fail(function() {
+            showAppAlert("Network error. Please try again.", 'danger');
+        });
     });
 }
 

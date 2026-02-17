@@ -58,9 +58,9 @@
                             '<small class="text-secondary-d1 font-600">Date : ' + signedAt + '</small>' +
                             linksHtml +
                         '</div>';
-                    alert(response.message);
+                    showAppAlert(response.message, 'success');
                 } else {
-                    alert(response.message || 'Failed to apply signature');
+                    showAppAlert(response.message || 'Failed to apply signature', 'danger');
                 }
             }, 'json');
         }
@@ -74,7 +74,7 @@
                 requestId: requestId,
                 email: email
             }, function(response) {
-                alert(response.message);
+                showAppAlert(response.message, 'success');
             }, 'json');
         }
     }
@@ -89,7 +89,7 @@
         });
 
         const printWindow = window.open('', '_blank', 'width=900,height=700');
-        if(!printWindow) { alert('Please allow popups for this site.'); return; }
+        if(!printWindow) { showAppAlert('Please allow popups for this site.', 'warning'); return; }
 
         var html = '<!doctype html><html><head><meta charset="utf-8"><title>Print - Replacement Letter</title>' +
             '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">' +
@@ -119,7 +119,7 @@
                 requestId: requestId,
                 phone: phone
             }, function(response) {
-                alert(response.message);
+                showAppAlert(response.message, 'success');
             }, 'json');
         }
     }
@@ -130,7 +130,7 @@
                 action: 'sendDispatch',
                 requestId: requestId
             }, function(response) {
-                alert(response.message);
+                showAppAlert(response.message, 'success');
             }, 'json');
         }
     }

@@ -279,17 +279,18 @@ public class CreditNoteDAO {
     }
 
     public void approveCreditNoteWithDocument(final Connection conn, final int replacementRequestId,
-                                              final String creditNoteNumber, final String documentPath,
-                                              final String comments) throws Exception {
+                                              final String location, final String creditNoteNumber,
+                                              final String documentPath, final String comments) throws Exception {
         final String sql = "UPDATE CREDIT_NOTE SET STATUS = 'APPROVED', CREDIT_NOTE_NUMBER = ?, " +
                 "DOCUMENT_PATH = ?, COMMENTS = COMMENTS || CHR(10) || ?, UPDATE_DATE_TIME = SYSTIMESTAMP " +
-                "WHERE REPLACEMENT_REQUEST_ID = ? AND STATUS = 'PENDING'";
+                "WHERE REPLACEMENT_REQUEST_ID = ? AND LOCATION = ? AND STATUS = 'PENDING'";
 
         try (final PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, creditNoteNumber);
             ps.setString(2, documentPath);
             ps.setString(3, comments != null ? comments : "");
             ps.setInt(4, replacementRequestId);
+            ps.setString(5, location);
             ps.executeUpdate();
         }
     }
@@ -309,16 +310,28 @@ public class CreditNoteDAO {
     }
 
     public void approveCreditNotesByRequestId(final Connection conn, final int replacementRequestId,
-                                              final String creditNoteNumber, final String comments) throws Exception {
+                                              final String location, final String creditNoteNumber,
+                                              final String comments) throws Exception {
         final String sql = "UPDATE CREDIT_NOTE SET STATUS = 'APPROVED', CREDIT_NOTE_NUMBER = ?, " +
                 "COMMENTS = COMMENTS || CHR(10) || ?, UPDATE_DATE_TIME = SYSTIMESTAMP " +
-                "WHERE REPLACEMENT_REQUEST_ID = ? AND STATUS = 'PENDING'";
+                "WHERE REPLACEMENT_REQUEST_ID = ? AND LOCATION = ? AND STATUS = 'PENDING'";
 
         try (final PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, creditNoteNumber);
             ps.setString(2, comments != null ? comments : "");
             ps.setInt(3, replacementRequestId);
+            ps.setString(4, location);
             ps.executeUpdate();
+        }
+    }
+
+    public boolean hasPendingCreditNotes(final Connection conn, final int replacementRequestId) throws Exception {
+        final String sql = "SELECT COUNT(*) AS CNT FROM CREDIT_NOTE WHERE REPLACEMENT_REQUEST_ID = ? AND STATUS = 'PENDING'";
+        try (final PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, replacementRequestId);
+            try (final ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt("CNT") > 0;
+            }
         }
     }
 }

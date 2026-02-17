@@ -281,17 +281,17 @@ function saveCommercial() {
 
     // Validation
     if (!newModel) {
-        alert('⚠️ Please enter the new model name');
+        showAppAlert('Please enter the new model name', 'warning');
         return;
     }
 
     if (!existingCost || !newCost || !existingRental || !newRental) {
-        alert('⚠️ Please fill all cost and rental fields');
+        showAppAlert('Please fill all cost and rental fields', 'warning');
         return;
     }
 
     if (!justification || justification.length < 20) {
-        alert('⚠️ Please provide detailed justification (minimum 20 characters)');
+        showAppAlert('Please provide detailed justification (minimum 20 characters)', 'warning');
         return;
     }
 
@@ -317,17 +317,17 @@ function saveCommercial() {
         success: function(response) {
             if (response.success) {
                 $('#commercialModal').modal('hide');
-                alert('✅ ' + response.message);
+                showAppAlert(response.message, 'success');
 
                 // Reload the commercials popup
                 showCommercialsPopup(currentRequestId);
             } else {
-                alert('❌ Error: ' + response.message);
+                showAppAlert(response.message, 'danger');
                 btn.html(originalHtml).prop('disabled', false);
             }
         },
         error: function(xhr, status, error) {
-            alert('❌ Network error: ' + error);
+            showAppAlert('Network error: ' + error, 'danger');
             btn.html(originalHtml).prop('disabled', false);
         }
     });
@@ -509,22 +509,22 @@ function submitFinalAction() {
 
     // Validation
     if (!actionType) {
-        alert('⚠️ Please select an action type');
+        showAppAlert('Please select an action type', 'warning');
         return;
     }
 
     if (!amGeneralComments) {
-        alert('⚠️ Please enter your general comments');
+        showAppAlert('Please enter your general comments', 'warning');
         return;
     }
 
     if (actionType === 'FORWARD' && !forwardTo) {
-        alert('⚠️ Please select who to forward to');
+        showAppAlert('Please select who to forward to', 'warning');
         return;
     }
 
     if (actionType === 'REJECT' && !rejectReason) {
-        alert('⚠️ Please provide rejection reason');
+        showAppAlert('Please provide rejection reason', 'warning');
         return;
     }
 
@@ -556,20 +556,20 @@ function submitFinalAction() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert('✅ ' + response.message);
+                showAppAlert(response.message, 'success');
                 $('#amActionModal').modal('hide');
                 $('#commercialsPopup').modal('hide');
 
                 setTimeout(function() {
                     location.reload();
-                }, 1000);
+                }, 10000);
             } else {
-                alert('❌ Error: ' + response.message);
+                showAppAlert(response.message, 'danger');
                 btn.html(originalHtml).prop('disabled', false);
             }
         },
         error: function(xhr, status, error) {
-            alert('❌ Network error: ' + error);
+            showAppAlert('Network error: ' + error, 'danger');
             btn.html(originalHtml).prop('disabled', false);
         }
     });

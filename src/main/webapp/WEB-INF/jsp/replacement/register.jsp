@@ -501,11 +501,11 @@ function openViewModal(reqId) {
         if (response.success) {
             populateViewModal(response.data);
         } else {
-            alert('Error: ' + response.message);
+            showAppAlert('Error: ' + response.message, 'danger');
             $('#viewLetterModal').modal('hide');
         }
     }, 'json').fail(function() {
-        alert('Network error. Please try again.');
+        showAppAlert('Network error. Please try again.', 'danger');
         $('#viewLetterModal').modal('hide');
     });
 }
@@ -633,12 +633,12 @@ $('#uploadForm').on('submit', function(e) {
                 // Reset upload button
                 $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload mr-1"></i>Upload Document');
             } else {
-                alert('Error: ' + data.message);
+                showAppAlert('Error: ' + data.message, 'danger');
                 $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload mr-1"></i>Upload Document');
             }
         },
         error: function() {
-            alert('Network error. Please try again.');
+            showAppAlert('Network error. Please try again.', 'danger');
             $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload mr-1"></i>Upload Document');
         }
     });
@@ -712,14 +712,14 @@ function replaceDocument() {
                 $('#replaceFile').val('');
                 $('#replaceFileLabel').text('Choose new file...');
                 $('#pdfPreviewContainer').hide();
-                alert('Document replaced successfully!');
+                showAppAlert('Document replaced successfully!', 'success');
             } else {
-                alert('Error: ' + data.message);
+                showAppAlert('Error: ' + data.message, 'danger');
             }
             $('#replaceUploadBtn').prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i>Replace');
         },
         error: function() {
-            alert('Network error. Please try again.');
+            showAppAlert('Network error. Please try again.', 'danger');
             $('#replaceUploadBtn').prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i>Replace');
         }
     });
@@ -739,34 +739,32 @@ function downloadTempDocument() {
 
 // Freeze record (final step)
 function freezeRecord() {
-    if (!confirm('Are you sure you want to freeze this record?\n\nThis action cannot be undone. The record and all associated data will be permanently locked.')) {
-        return;
-    }
-    
-    $('#freezeBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Freezing...');
-    
-    $.ajax({
-        url: contextPath + '/views/replacement/register',
-        type: 'POST',
-        data: {
-            action: 'freeze',
-            id: currentUploadId
-        },
-        success: function(data) {
-            if (data.success) {
-                $.get(contextPath + '/views/replacement/closeFlowTracking.jsp', { id: currentUploadId }, function() {}, 'json');
-                alert('Record frozen successfully!\n\nRecord ' + currentUploadLetterRef + ' is now permanently locked.');
-                $('#reviewFreezeModal').modal('hide');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
+    showAppConfirm('Are you sure you want to freeze this record?\n\nThis action cannot be undone. The record and all associated data will be permanently locked.', function() {
+        $('#freezeBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Freezing...');
+        
+        $.ajax({
+            url: contextPath + '/views/replacement/register',
+            type: 'POST',
+            data: {
+                action: 'freeze',
+                id: currentUploadId
+            },
+            success: function(data) {
+                if (data.success) {
+                    $.get(contextPath + '/views/replacement/closeFlowTracking.jsp', { id: currentUploadId }, function() {}, 'json');
+                    showAppAlert('Record frozen successfully! Record ' + currentUploadLetterRef + ' is now permanently locked.', 'success');
+                    $('#reviewFreezeModal').modal('hide');
+                    setTimeout(function() { location.reload(); }, 10000);
+                } else {
+                    showAppAlert('Error: ' + data.message, 'danger');
+                    $('#freezeBtn').prop('disabled', false).html('<i class="fas fa-lock mr-1"></i>Freeze Record');
+                }
+            },
+            error: function() {
+                showAppAlert('Network error. Please try again.', 'danger');
                 $('#freezeBtn').prop('disabled', false).html('<i class="fas fa-lock mr-1"></i>Freeze Record');
             }
-        },
-        error: function() {
-            alert('Network error. Please try again.');
-            $('#freezeBtn').prop('disabled', false).html('<i class="fas fa-lock mr-1"></i>Freeze Record');
-        }
+        });
     });
 }
 
@@ -808,13 +806,13 @@ function formatDeliveryStatus(status, deliveredDate) {
 function exportToCSV() {
     var table = document.getElementById('registerTable');
     if (!table) {
-        alert('No data to export');
+        showAppAlert('No data to export', 'warning');
         return;
     }
     
     var rows = table.querySelectorAll('tbody tr');
     if (rows.length === 0) {
-        alert('No data to export');
+        showAppAlert('No data to export', 'warning');
         return;
     }
     
@@ -856,13 +854,13 @@ function exportToCSV() {
 function exportToPDF() {
     var table = document.getElementById('registerTable');
     if (!table) {
-        alert('No data to export');
+        showAppAlert('No data to export', 'warning');
         return;
     }
     
     var printWindow = window.open('', '_blank');
     if (!printWindow) {
-        alert('Please allow popups for this site to export PDF');
+        showAppAlert('Please allow popups for this site to export PDF', 'warning');
         return;
     }
     

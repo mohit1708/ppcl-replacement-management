@@ -280,7 +280,7 @@ function submitManualAdd() {
         },
         error: function(xhr, status, error) {
             $('#submitAddBtn').html('<i class="fas fa-save"></i> Add Mapping').prop('disabled', false);
-            alert('Error: ' + error);
+            showAppAlert('Error: ' + error, 'danger');
         }
     });
 }
@@ -345,7 +345,7 @@ function submitBulkUpload() {
         },
         error: function(xhr, status, error) {
             $('#submitAddBtn').html('<i class="fas fa-save"></i> Add Mapping').prop('disabled', false);
-            alert('Error: ' + error);
+            showAppAlert('Error: ' + error, 'danger');
         }
     });
 }
@@ -429,11 +429,11 @@ function openEditModal(mappingId) {
                 $('#editRegion').val(m.region || '');
                 $('#editMappingModal').modal('show');
             } else {
-                alert('Error loading mapping');
+                showAppAlert('Error loading mapping', 'danger');
             }
         },
         error: function(xhr, status, error) {
-            alert('Error: ' + error);
+            showAppAlert('Error: ' + error, 'danger');
         }
     });
 }
@@ -468,11 +468,11 @@ function submitEdit() {
                 //alert('Mapping updated successfully');
                 loadMappings();
             } else {
-                alert('Error: ' + response.message);
+                showAppAlert('Error: ' + response.message, 'danger');
             }
         },
         error: function(xhr, status, error) {
-            alert('Error: ' + error);
+            showAppAlert('Error: ' + error, 'danger');
         }
     });
 }
@@ -507,11 +507,11 @@ function confirmToggleStatus() {
             if (response.success) {
                 loadMappings();
             } else {
-                alert('Error: ' + response.message);
+                showAppAlert('Error: ' + response.message, 'danger');
             }
         },
         error: function(xhr, status, error) {
-            alert('Error: ' + error);
+            showAppAlert('Error: ' + error, 'danger');
         }
     });
 }

@@ -1181,6 +1181,7 @@ public class ReplacementRequestServlet extends BaseServlet {
         final HttpSession session = request.getSession();
         final User currentUser = (User) session.getAttribute("currentUser");
         final String comments = ServletUtil.optionalParam(request, "comments");
+        final String location = ServletUtil.optionalParam(request, "location");
 
         final String commentText = "Credit Note approved with number: " + creditNoteNumber +
                 (comments != null && !comments.isEmpty() ? ". Comments: " + comments : "");
@@ -1189,9 +1190,11 @@ public class ReplacementRequestServlet extends BaseServlet {
             con.setAutoCommit(false);
             try {
                 final CreditNoteDAO creditNoteDAO = new CreditNoteDAO();
-                creditNoteDAO.approveCreditNotesByRequestId(con, reqId, creditNoteNumber, comments);
+                creditNoteDAO.approveCreditNotesByRequestId(con, reqId, location, creditNoteNumber, comments);
 
-                transitionWorkflowDao.transitionFlow(con, reqId, commentText);
+                if (!creditNoteDAO.hasPendingCreditNotes(con, reqId)) {
+                    transitionWorkflowDao.transitionFlow(con, reqId, commentText);
+                }
 
                 con.commit();
             } catch (final Exception e) {

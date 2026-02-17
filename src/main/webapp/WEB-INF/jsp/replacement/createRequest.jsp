@@ -568,7 +568,7 @@
                 $('#signInLocation').html(options);
             },
             error: function () {
-                alert("Error loading client branches. Please try again.");
+                showAppAlert("Error loading client branches. Please try again.", "danger");
             }
         });
     }
@@ -590,7 +590,7 @@
                 }
             },
             error: function () {
-                alert("Error loading branch contact. Please try again.");
+                showAppAlert("Error loading branch contact. Please try again.", "danger");
             }
         });
     }
@@ -618,11 +618,11 @@
                     $('#step3Card').fadeIn();
                     $('#step3Indicator').addClass('active');
                 } else {
-                    alert("No locations found for this client!");
+                    showAppAlert("No locations found for this client!", "warning");
                 }
             },
             error: function () {
-                alert("Error loading locations. Please try again.");
+                showAppAlert("Error loading locations. Please try again.", "danger");
             }
         });
     }
@@ -745,11 +745,11 @@
                     $('#step4Card').fadeIn();
                     $('#step4Indicator').addClass('active');
                 } else {
-                    alert("No printers found for selected locations!");
+                    showAppAlert("No printers found for selected locations!", "warning");
                 }
             },
             error: function () {
-                alert("Error loading printers. Please try again.");
+                showAppAlert("Error loading printers. Please try again.", "danger");
             }
         });
     }
@@ -956,13 +956,13 @@
 
         if (selectedPrinters === 0) {
             e.preventDefault();
-            alert("⚠️ Please select at least one printer for replacement!");
+            showAppAlert("Please select at least one printer for replacement!", "warning");
             return false;
         }
 
         if (!$('#contactName').val() || !$('#contactNumber').val()) {
             e.preventDefault();
-            alert("⚠️ Please provide client contact details!");
+            showAppAlert("Please provide client contact details!", "warning");
             return false;
         }
 
@@ -1051,7 +1051,7 @@
                 }, 1000);
             },
             error: function () {
-                alert("Error loading client branches. Please try again.");
+                showAppAlert("Error loading client branches. Please try again.", "danger");
             }
         });
     }
@@ -1136,7 +1136,7 @@
         const error = urlParams.get('error');
 
         if (error === 'no_printers_selected') {
-            alert('⚠️ Please select at least one printer for replacement!');
+            showAppAlert('Please select at least one printer for replacement!', 'warning');
             // Clean URL without reloading
             const cleanUrl = window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl + '?action=new');

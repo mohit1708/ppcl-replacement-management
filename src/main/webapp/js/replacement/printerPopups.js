@@ -126,7 +126,7 @@ function updateNewModel(printerId, reqId) {
     const newModel = $('#newModel_' + printerId).val().trim();
 
     if (!newModel) {
-        alert('Please enter a new model name');
+        showAppAlert('Please enter a new model name', 'warning');
         return;
     }
 
@@ -155,13 +155,13 @@ function updateNewModel(printerId, reqId) {
                 // Reload printer details
                 showPrintersPopup(reqId);
             } else {
-                alert('Error: ' + response.message);
+                showAppAlert('Error: ' + response.message, 'danger');
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
             }
         },
         error: function(xhr, status, error) {
-            alert('Network error: ' + error);
+            showAppAlert('Network error: ' + error, 'danger');
             btn.innerHTML = originalHtml;
             btn.disabled = false;
         }
@@ -371,7 +371,7 @@ function exportServiceCalls(agrProdId) {
  */
 function showToast(title, message, type) {
     // Using Bootstrap toast or simple alert
-    alert(title + ': ' + message);
+    showAppAlert(title + ': ' + message, 'danger');
 }
 
 // Context path for AJAX calls

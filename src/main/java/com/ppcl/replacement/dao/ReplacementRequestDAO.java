@@ -1,6 +1,7 @@
 package com.ppcl.replacement.dao;
 
 import com.ppcl.replacement.model.*;
+import com.ppcl.replacement.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -377,44 +378,28 @@ public class ReplacementRequestDAO extends BaseDAO {
                     final Integer svcCallId = rs.getInt("SERVICE_CALL_ID");
                     r.setServiceCallId(rs.wasNull() ? null : svcCallId);
 
-                    // TAT Calculation
+                    // TAT Calculation using DateUtil (working hours: Mon-Fri, 9-17)
                     final int tatDuration = rs.getInt("TAT_DURATION");
                     final String tatUnit = rs.getString("TAT_DURATION_UNIT");
                     final Timestamp stageStart = rs.getTimestamp("STAGE_START");
                     final Timestamp stageEnd = rs.getTimestamp("STAGE_END");
 
                     if (tatDuration > 0 && stageStart != null) {
-                        // Convert TAT duration to minutes
-                        final long tatDurationMinutes;
-                        if ("HOURS".equalsIgnoreCase(tatUnit)) {
-                            tatDurationMinutes = tatDuration * 60L;
-                        } else {
-                            // Default to DAYS
-                            tatDurationMinutes = tatDuration * 24L * 60L;
-                        }
+                        final java.util.Date endTime = (stageEnd != null) ? stageEnd : new java.util.Date();
+                        final double percentage = DateUtil.calculateTatPercentage(stageStart, endTime, tatDuration, tatUnit);
 
-                        // Calculate actual time elapsed in minutes
-                        final long endTime = (stageEnd != null) ? stageEnd.getTime() : System.currentTimeMillis();
-                        final long actualMinutes = (endTime - stageStart.getTime()) / (1000 * 60);
-
-                        // Calculate percentage
-                        final double percentage = (tatDurationMinutes > 0) ? (actualMinutes * 100.0 / tatDurationMinutes) : 0;
-
-                        // Determine TAT status
-                        final String tatStatus;
-                        if (percentage >= 100) {
-                            tatStatus = "BREACH";
-                        } else if (percentage >= 80) {
-                            tatStatus = "WARNING";
-                        } else {
-                            tatStatus = "WITHIN";
-                        }
+                        final String unit = (tatUnit != null) ? tatUnit : "DAYS";
+                        final long tatDurationMinutes = "HOURS".equalsIgnoreCase(unit)
+                                ? tatDuration * 60L
+                                : tatDuration * 8L * 60L;
+                        final long actualMinutes = DateUtil.workingMinutesBetween(
+                                stageStart, endTime, java.time.ZoneId.systemDefault());
 
                         r.setTatDurationMinutes(tatDurationMinutes);
                         r.setTatActualMinutes(actualMinutes);
                         r.setTatUnit(tatUnit);
                         r.setTatPercentage(percentage);
-                        r.setTatStatus(tatStatus);
+                        r.setTatStatus(DateUtil.getTatStatus(percentage));
                     }
 
                     list.add(r);

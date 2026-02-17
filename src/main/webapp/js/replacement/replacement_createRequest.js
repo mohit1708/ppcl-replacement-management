@@ -96,7 +96,7 @@ function loadClientBranches(clientId) {
             $('#signInLocation').html(options);
         },
         error: function() {
-            alert("Error loading client branches. Please try again.");
+            showAppAlert("Error loading client branches. Please try again.", 'danger');
         }
     });
 }
@@ -118,7 +118,7 @@ function loadBranchContact(branchId) {
             }
         },
         error: function() {
-            alert("Error loading branch contact. Please try again.");
+            showAppAlert("Error loading branch contact. Please try again.", 'danger');
         }
     });
 }
@@ -148,11 +148,11 @@ function loadClientLocations(clientId) {
                 $('#step3Card').fadeIn();
                 $('#step3Indicator').addClass('active');
             } else {
-                alert("No locations found for this client!");
+                showAppAlert("No locations found for this client!", 'warning');
             }
         },
         error: function() {
-            alert("Error loading locations. Please try again.");
+            showAppAlert("Error loading locations. Please try again.", 'danger');
         }
     });
 }
@@ -244,11 +244,11 @@ function loadPrintersForLocations() {
                 $('#step4Card').fadeIn();
                 $('#step4Indicator').addClass('active');
             } else {
-                alert("No printers found for selected locations!");
+                showAppAlert("No printers found for selected locations!", 'warning');
             }
         },
         error: function() {
-            alert("Error loading printers. Please try again.");
+            showAppAlert("Error loading printers. Please try again.", 'danger');
         }
     });
 }

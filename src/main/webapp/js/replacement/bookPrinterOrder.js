@@ -346,7 +346,7 @@ var BookPrinterOrder = (function($) {
         });
 
         if (appliedCount > 0) {
-            alert('Values from Item 1 applied to ' + appliedCount + ' other item(s)!');
+            showAppAlert('Values from Item 1 applied to ' + appliedCount + ' other item(s)!', 'success');
         }
     }
 
@@ -358,7 +358,7 @@ var BookPrinterOrder = (function($) {
         var signatory = $('#bookOrderSignatory').val();
 
         if (!signatory) {
-            alert('Please select a signatory');
+            showAppAlert('Please select a signatory', 'warning');
             return;
         }
 
@@ -390,30 +390,28 @@ var BookPrinterOrder = (function($) {
         });
 
         var totalPrinters = $('#bookOrderTotalPrintersFooter').text();
-        if (!confirm('Book printer order for ' + totalPrinters + ' printers? This will:\n\n• Generate order logs\n• Book pullback calls (auto-aligned to courier or ERP)\n• Link Replacement Request ID with Printer Order')) {
-            return;
-        }
-
-        $.post(
-            contextPath + '/views/replacement/myRequests',
-            {
-                action: 'bookOrder',
-                reqId: reqId,
-                signatory: signatory,
-                orderItems: JSON.stringify(orderItems)
-            },
-            function(resp) {
-                if (resp.success) {
-                    $('#bookOrderModal').modal('hide');
-                    alert("✅ Printer order booked successfully!\n\nOrder ID: " + (resp.orderId || 'PO-' + reqId) + "\nPullback calls created: " + totalPrinters);
-                    location.reload();
-                } else {
-                    alert("❌ Failed: " + (resp.message || "Unknown error"));
-                }
-            },
-            'json'
-        ).fail(function() {
-            alert("❌ Network error. Please try again.");
+        showAppConfirm('Book printer order for ' + totalPrinters + ' printers? This will:\n\n• Generate order logs\n• Book pullback calls (auto-aligned to courier or ERP)\n• Link Replacement Request ID with Printer Order', function() {
+            $.post(
+                contextPath + '/views/replacement/myRequests',
+                {
+                    action: 'bookOrder',
+                    reqId: reqId,
+                    signatory: signatory,
+                    orderItems: JSON.stringify(orderItems)
+                },
+                function(resp) {
+                    if (resp.success) {
+                        $('#bookOrderModal').modal('hide');
+                        showAppAlert("Printer order booked successfully! Order ID: " + (resp.orderId || 'PO-' + reqId) + " Pullback calls created: " + totalPrinters, 'success');
+                        setTimeout(function() { location.reload(); }, 10000);
+                    } else {
+                        showAppAlert("Failed: " + (resp.message || "Unknown error"), 'danger');
+                    }
+                },
+                'json'
+            ).fail(function() {
+                showAppAlert("Network error. Please try again.", 'danger');
+            });
         });
     }
 

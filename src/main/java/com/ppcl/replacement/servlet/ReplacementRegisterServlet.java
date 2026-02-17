@@ -1,6 +1,7 @@
 package com.ppcl.replacement.servlet;
 
 import com.ppcl.replacement.constants.AppConstants;
+import com.ppcl.replacement.dao.CreditNoteDAO;
 import com.ppcl.replacement.dao.RegisterDAO;
 import com.ppcl.replacement.model.RegisterRequestRow;
 import com.ppcl.replacement.util.FileUploadUtil;
@@ -171,6 +172,14 @@ public class ReplacementRegisterServlet extends HttpServlet {
         if (!fileName.toLowerCase().endsWith(".pdf")) {
             JsonResponse.sendError(response, "Only PDF files are allowed");
             return;
+        }
+
+        final CreditNoteDAO creditNoteDAO = new CreditNoteDAO();
+        try (final java.sql.Connection con = com.ppcl.replacement.util.DBConnectionPool.getConnection()) {
+            if (creditNoteDAO.hasPendingCreditNotes(con, requestId)) {
+                JsonResponse.sendError(response, "Cannot upload: Credit notes are still pending for some locations. Please complete all credit note approvals first.");
+                return;
+            }
         }
 
         final String relativePath = FileUploadUtil.uploadFile(AppConstants.UPLOAD_BASE_REPLACEMENT_REGISTER, filePart, "signed_" + requestId);
@@ -373,6 +382,14 @@ public class ReplacementRegisterServlet extends HttpServlet {
         if (tempInfo == null) {
             JsonResponse.sendError(response, "No document uploaded. Please upload a document first.");
             return;
+        }
+
+        final CreditNoteDAO creditNoteDAO = new CreditNoteDAO();
+        try (final java.sql.Connection con = com.ppcl.replacement.util.DBConnectionPool.getConnection()) {
+            if (creditNoteDAO.hasPendingCreditNotes(con, requestId)) {
+                JsonResponse.sendError(response, "Cannot freeze: Credit notes are still pending for some locations. Please complete all credit note approvals first.");
+                return;
+            }
         }
 
         final String relativePath = FileUploadUtil.uploadFromPath(AppConstants.UPLOAD_BASE_REPLACEMENT_REGISTER, tempInfo.filePath, "signed_" + requestId);

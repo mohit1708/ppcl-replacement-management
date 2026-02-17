@@ -223,14 +223,16 @@ public class MyRequestRow {
         this.tatStatus = tatStatus;
     }
 
-    // Helper methods for display
+    // Helper methods for display (1 working day = 8 hours = 480 minutes)
+    private static final long WORKING_MINUTES_PER_DAY = 8 * 60;
+
     public String getTatActualDisplay() {
         if (tatDurationMinutes <= 0) return "N/A";
         if ("HOURS".equals(tatUnit)) {
             final long hours = tatActualMinutes / 60;
             return hours + " hr" + (hours != 1 ? "s" : "");
         } else {
-            final long days = tatActualMinutes / (60 * 24);
+            final long days = tatActualMinutes / WORKING_MINUTES_PER_DAY;
             if (days == 0 && tatActualMinutes > 0) {
                 final long hours = tatActualMinutes / 60;
                 return hours > 0 ? hours + " hr" + (hours != 1 ? "s" : "") : tatActualMinutes + " min";
@@ -245,7 +247,7 @@ public class MyRequestRow {
             final long hours = tatDurationMinutes / 60;
             return hours + " hr" + (hours != 1 ? "s" : "");
         } else {
-            final long days = tatDurationMinutes / (60 * 24);
+            final long days = tatDurationMinutes / WORKING_MINUTES_PER_DAY;
             return days + " day" + (days != 1 ? "s" : "");
         }
     }
@@ -257,7 +259,7 @@ public class MyRequestRow {
             final long hours = breachMinutes / 60;
             return "+" + hours + " hr" + (hours != 1 ? "s" : "") + " breach";
         } else {
-            final long days = breachMinutes / (60 * 24);
+            final long days = breachMinutes / WORKING_MINUTES_PER_DAY;
             return "+" + days + " day" + (days != 1 ? "s" : "") + " breach";
         }
     }

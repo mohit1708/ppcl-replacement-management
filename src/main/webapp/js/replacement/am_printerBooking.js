@@ -69,7 +69,7 @@ $(document).ready(function() {
     $('#printerBookingForm').submit(function(e) {
         // Validate signatory
         if (!$('#signatorySelect').val()) {
-            alert('Please select a signatory.');
+            showAppAlert('Please select a signatory.', 'warning');
             e.preventDefault();
             return false;
         }

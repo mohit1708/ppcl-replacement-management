@@ -899,7 +899,7 @@
                 $('#actionModalLoading').hide();
                 $('#actionModalContent').show();
             } else {
-                alert('Failed to load request details');
+                showAppAlert('Failed to load request details', 'danger');
                 $('#actionModal').modal('hide');
             }
         }, 'json');
@@ -911,12 +911,12 @@
         var $allComments = $('#actionPrintersSection .printer-comments');
 
         if ($allModels.length === 0) {
-            alert('No printers to copy from');
+            showAppAlert('No printers to copy from', 'warning');
             return;
         }
 
         if ($allModels.length === 1) {
-            alert('Only one printer exists, nothing to copy to');
+            showAppAlert('Only one printer exists, nothing to copy to', 'info');
             return;
         }
 
@@ -925,7 +925,7 @@
         var commentsVal = $allComments.first().val();
 
         if (!modelVal) {
-            alert('Please select a recommended printer model for the first printer before copying');
+            showAppAlert('Please select a recommended printer model for the first printer before copying', 'warning');
             return;
         }
 
@@ -946,7 +946,7 @@
             }
         });
 
-        alert('✅ Values from first printer copied to all ' + ($allModels.length - 1) + ' other printer(s)');
+        showAppAlert('Values from first printer copied to all ' + ($allModels.length - 1) + ' other printer(s)', 'success');
     }
 
     function approveAndForward() {
@@ -964,7 +964,7 @@
 
             if (!newModelId) {
                 hasError = true;
-                alert('Please select a recommended printer model for all printers');
+                showAppAlert('Please select a recommended printer model for all printers', 'warning');
                 return false;
             }
 
@@ -1003,15 +1003,15 @@
                 comments: actionComments
             }, function (resp) {
                 if (resp.success) {
-                    alert('✅ Recommendations saved and ' + resp.message);
+                    showAppAlert('Recommendations saved and ' + resp.message, 'success');
                     $('#actionModal').modal('hide');
-                    location.reload();
+                    setTimeout(function() { location.reload(); }, 10000);
                 } else {
-                    alert('❌ ' + (resp.message || 'Failed'));
+                    showAppAlert(resp.message || 'Failed', 'danger');
                 }
             }, 'json');
         }).fail(function () {
-            alert('❌ Failed to save recommendations');
+            showAppAlert('Failed to save recommendations', 'danger');
         });
     }
 
@@ -1027,7 +1027,7 @@
         var comments = $('#rejectComments').val();
 
         if (!comments) {
-            alert('Please provide rejection comments');
+            showAppAlert('Please provide rejection comments', 'warning');
             return;
         }
 
@@ -1040,12 +1040,12 @@
             comments: fullReason
         }, function (resp) {
             if (resp.success) {
-                alert('✅ ' + resp.message);
+                showAppAlert(resp.message, 'success');
                 $('#rejectModal').modal('hide');
                 $('#actionModal').modal('hide');
-                location.reload();
+                setTimeout(function() { location.reload(); }, 10000);
             } else {
-                alert('❌ ' + (resp.message || 'Failed'));
+                showAppAlert(resp.message || 'Failed', 'danger');
             }
         }, 'json');
     }
@@ -1062,7 +1062,7 @@
         var comments = $('#forwardComments').val();
 
         if (!forwardTo || !comments) {
-            alert('Please fill all required fields');
+            showAppAlert('Please fill all required fields', 'warning');
             return;
         }
 
@@ -1079,7 +1079,7 @@
 
             if (!newModelId) {
                 hasError = true;
-                alert('Please select a recommended printer model for all printers');
+                showAppAlert('Please select a recommended printer model for all printers', 'warning');
                 return false;
             }
 
@@ -1111,22 +1111,22 @@
                 comments: comments
             }, function (resp) {
                 if (resp.success) {
-                    alert('✅ ' + resp.message);
+                    showAppAlert(resp.message, 'success');
                     $('#forwardModal').modal('hide');
                     $('#actionModal').modal('hide');
                     location.reload();
                 } else {
-                    alert('❌ ' + (resp.message || 'Failed'));
+                    showAppAlert(resp.message || 'Failed', 'danger');
                 }
             }, 'json');
         }).fail(function () {
-            alert('❌ Failed to save printer recommendations');
+            showAppAlert('Failed to save printer recommendations', 'danger');
         });
     }
 
     function exportServiceCalls() {
         if (currentHistoryData.length === 0) {
-            alert('No service calls data to export');
+            showAppAlert('No service calls data to export', 'warning');
             return;
         }
 
@@ -1303,14 +1303,14 @@
             function (resp) {
                 if (resp.success) {
                     $('#reminderModal').modal('hide');
-                    alert("✅ Reminder sent successfully!");
+                    showAppAlert("Reminder sent successfully!", "success");
                 } else {
-                    alert("❌ Failed: " + (resp.message || "Unknown error"));
+                    showAppAlert("Failed: " + (resp.message || "Unknown error"), "danger");
                 }
             },
             'json'
         ).fail(function () {
-            alert("❌ Network error. Please try again.");
+            showAppAlert("Network error. Please try again.", "danger");
         });
     }
 
@@ -1431,13 +1431,13 @@
     function exportToPDF() {
         var table = document.getElementById('requestsTable');
         if (!table) {
-            alert('No data to export');
+            showAppAlert('No data to export', 'warning');
             return;
         }
 
         var printWindow = window.open('', '_blank');
         if (!printWindow) {
-            alert('Please allow popups for this site to export PDF');
+            showAppAlert('Please allow popups for this site to export PDF', 'warning');
             return;
         }
 

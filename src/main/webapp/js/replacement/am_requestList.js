@@ -284,21 +284,21 @@ $('#commercialForm').submit(function(e) {
         $(this).serialize(),
         function(response) {
             if (response.success) {
-                alert('✅ Commercial details saved successfully!');
+                showAppAlert('Commercial details saved successfully!', 'success');
                 $('#commercialDetailsModal').modal('hide');
 
                 // Reload commercials popup
                 let reqId = $('#commercialReqId').val();
                 showCommercialsPopup(reqId);
             } else {
-                alert('❌ Error: ' + response.message);
+                showAppAlert(response.message, 'danger');
             }
             $('#saveCommercialBtn').prop('disabled', false)
                                    .html('<i class="fas fa-save"></i> Save Commercial Details');
         },
         'json'
     ).fail(function() {
-        alert('❌ Network error');
+        showAppAlert('Network error', 'danger');
         $('#saveCommercialBtn').prop('disabled', false)
                                .html('<i class="fas fa-save"></i> Save Commercial Details');
     });
@@ -364,7 +364,7 @@ $('#amActionForm').submit(function(e) {
     let actionType = $('input[name="amActionType"]:checked').val();
 
     if (!actionType) {
-        alert('Please select an action');
+        showAppAlert('Please select an action', 'warning');
         return false;
     }
 
@@ -382,17 +382,17 @@ $('#amActionForm').submit(function(e) {
         $(this).serialize(),
         function(response) {
             if (response.success) {
-                alert('✅ Action completed successfully!');
-                location.reload();
+                showAppAlert('Action completed successfully!', 'success');
+                setTimeout(function() { location.reload(); }, 10000);
             } else {
-                alert('❌ Error: ' + response.message);
+                showAppAlert(response.message, 'danger');
                 $('#amActionSubmitBtn').prop('disabled', false)
                                        .html('<i class="fas fa-paper-plane"></i> Submit Action');
             }
         },
         'json'
     ).fail(function() {
-        alert('❌ Network error');
+        showAppAlert('Network error', 'danger');
         $('#amActionSubmitBtn').prop('disabled', false)
                                .html('<i class="fas fa-paper-plane"></i> Submit Action');
     });

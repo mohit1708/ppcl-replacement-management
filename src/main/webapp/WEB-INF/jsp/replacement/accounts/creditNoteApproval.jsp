@@ -210,6 +210,7 @@
                 <form id="uploadForm" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="approve">
                     <input type="hidden" name="reqId" id="modalReqId">
+                    <input type="hidden" name="location" id="modalLocation">
                     <div class="modal-body">
                         <div class="card mb-4" style="background: #f8f9fa;">
                             <div class="card-body">
@@ -283,6 +284,7 @@
 
         function openUploadModal(reqId, clientName, location, printerCount, totalAmount, requesterName) {
             $('#modalReqId').val(reqId);
+            $('#modalLocation').val(location);
             $('#modalClientName').text(clientName);
             $('#modalAmount').text('₹' + totalAmount.toLocaleString('en-IN'));
             $('#modalItems').text('Printer (' + printerCount + ')');
@@ -314,12 +316,12 @@
             var creditNoteFile = $('#creditNoteFile')[0].files[0];
 
             if (!creditNoteNumber) {
-                alert('Please enter a Credit Note Number');
+                showAppAlert('Please enter a Credit Note Number', 'warning');
                 return;
             }
 
             if (!creditNoteFile) {
-                alert('Please upload a Credit Note document');
+                showAppAlert('Please upload a Credit Note document', 'warning');
                 return;
             }
 
@@ -333,14 +335,14 @@
                 contentType: false,
                 success: function(data) {
                     if (data.success) {
-                        alert('Credit note issued successfully!');
-                        location.reload();
+                        showAppAlert('Credit note issued successfully!', 'success');
+                        setTimeout(function() { location.reload(); }, 10000);
                     } else {
-                        alert('Error: ' + (data.message || 'Failed to issue credit note'));
+                        showAppAlert('Error: ' + (data.message || 'Failed to issue credit note'), 'danger');
                     }
                 },
                 error: function() {
-                    alert('Error issuing credit note');
+                    showAppAlert('Error issuing credit note', 'danger');
                 }
             });
         });

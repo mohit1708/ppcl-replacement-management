@@ -225,7 +225,7 @@ function openActionModal(reqId, clientName) {
             $('#actionModalLoading').hide();
             $('#actionModalContent').show();
         } else {
-            alert('Failed to load request details');
+            showAppAlert('Failed to load request details', 'danger');
             $('#actionModal').modal('hide');
         }
     }, 'json');
@@ -245,7 +245,7 @@ function approveAndForward() {
         
         if (!newModelId) {
             hasError = true;
-            alert('Please select a recommended printer model for all printers');
+            showAppAlert('Please select a recommended printer model for all printers', 'warning');
             return false;
         }
         
@@ -282,15 +282,15 @@ function approveAndForward() {
             comments: actionComments
         }, function(resp) {
             if (resp.success) {
-                alert('✅ Recommendations saved and ' + resp.message);
+                showAppAlert('Recommendations saved and ' + resp.message, 'success');
                 $('#actionModal').modal('hide');
-                location.reload();
+                setTimeout(function() { location.reload(); }, 10000);
             } else {
-                alert('❌ ' + (resp.message || 'Failed'));
+                showAppAlert((resp.message || 'Failed'), 'danger');
             }
         }, 'json');
     }).fail(function() {
-        alert('❌ Failed to save recommendations');
+        showAppAlert('Failed to save recommendations', 'danger');
     });
 }
 
@@ -306,7 +306,7 @@ function confirmReject() {
     var comments = $('#rejectComments').val();
     
     if (!comments) {
-        alert('Please provide rejection comments');
+        showAppAlert('Please provide rejection comments', 'warning');
         return;
     }
     
@@ -319,12 +319,12 @@ function confirmReject() {
         comments: fullReason
     }, function(resp) {
         if (resp.success) {
-            alert('✅ ' + resp.message);
+            showAppAlert(resp.message, 'success');
             $('#rejectModal').modal('hide');
             $('#actionModal').modal('hide');
-            location.reload();
+            setTimeout(function() { location.reload(); }, 10000);
         } else {
-            alert('❌ ' + (resp.message || 'Failed'));
+            showAppAlert((resp.message || 'Failed'), 'danger');
         }
     }, 'json');
 }
@@ -341,7 +341,7 @@ function confirmForward() {
     var comments = $('#forwardComments').val();
     
     if (!forwardTo || !comments) {
-        alert('Please fill all required fields');
+        showAppAlert('Please fill all required fields', 'warning');
         return;
     }
     
@@ -354,12 +354,12 @@ function confirmForward() {
         comments: comments
     }, function(resp) {
         if (resp.success) {
-            alert('✅ ' + resp.message);
+            showAppAlert(resp.message, 'success');
             $('#forwardModal').modal('hide');
             $('#actionModal').modal('hide');
-            location.reload();
+            setTimeout(function() { location.reload(); }, 10000);
         } else {
-            alert('❌ ' + (resp.message || 'Failed'));
+            showAppAlert((resp.message || 'Failed'), 'danger');
         }
     }, 'json');
 }

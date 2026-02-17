@@ -659,13 +659,13 @@
     function exportToPDF() {
         var table = document.getElementById('requestsTable');
         if (!table) {
-            alert('No data to export');
+            showAppAlert('No data to export', 'warning');
             return;
         }
 
         var printWindow = window.open('', '_blank');
         if (!printWindow) {
-            alert('Please allow popups for this site to export PDF');
+            showAppAlert('Please allow popups for this site to export PDF', 'warning');
             return;
         }
 
@@ -777,7 +777,7 @@
             },
             error: function(xhr, status, error) {
                 console.error("❌ getPrinterDetails error:", error);
-                alert('Error loading printer details: ' + error);
+                showAppAlert('Error loading printer details: ' + error, 'danger');
             }
         });
 
@@ -864,7 +864,7 @@
         });
         
         if (appliedCount > 0) {
-            alert('Settings from Printer 1 applied to ' + appliedCount + ' other printer(s)!');
+            showAppAlert('Settings from Printer 1 applied to ' + appliedCount + ' other printer(s)!', 'success');
         }
     }
 
@@ -907,7 +907,7 @@
             },
             error: function(xhr, status, error) {
                 console.error("❌ getPrinterModels error:", error);
-                alert('Error loading printer models: ' + error);
+                showAppAlert('Error loading printer models: ' + error, 'danger');
             }
         });
     }
@@ -1052,7 +1052,7 @@
                 viewPrinterCommercial(idxOrPrinterId, modelName, serial);
                 return;
             }
-            alert('Commercial details not found. Please reload and try again.');
+            showAppAlert('Commercial details not found. Please reload and try again.', 'warning');
             return;
         }
         
@@ -1169,7 +1169,7 @@
 
             if (!isChecked && !comments.trim()) {
                 hasError = true;
-                alert('Comments are required when not continuing with existing commercial terms');
+                showAppAlert('Comments are required when not continuing with existing commercial terms', 'warning');
                 return false;
             }
 
@@ -1193,34 +1193,34 @@
 
         if (hasError) return;
 
-        if (!confirm('Approve commercial terms and notify Account Manager?')) return;
+        showAppConfirm('Approve commercial terms and notify Account Manager?', function() {
+            var overallComments = $('#commercialOverallComments').val();
 
-        var overallComments = $('#commercialOverallComments').val();
-
-        $.ajax({
-            url: contextPath + '/views/replacement/ammanager/approveRequest',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                reqId: currentReqId,
-                printerDecisions: printerDecisions,
-                printerRecommendations: printerRecommendations,
-                overallComments: overallComments
-            }),
-            success: function(response) {
-                console.log("✅ approveRequest success:", response);
-                if (response.success) {
-                    alert('✅ Commercial terms approved. Account Manager has been notified.');
-                    $('#commercialActionModal').modal('hide');
-                    location.reload();
-                } else {
-                    alert('❌ ' + (response.message || 'Failed to approve'));
+            $.ajax({
+                url: contextPath + '/views/replacement/ammanager/approveRequest',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    reqId: currentReqId,
+                    printerDecisions: printerDecisions,
+                    printerRecommendations: printerRecommendations,
+                    overallComments: overallComments
+                }),
+                success: function(response) {
+                    console.log("✅ approveRequest success:", response);
+                    if (response.success) {
+                        showAppAlert('Commercial terms approved. Account Manager has been notified.', 'success');
+                        $('#commercialActionModal').modal('hide');
+                        setTimeout(function() { location.reload(); }, 10000);
+                    } else {
+                        showAppAlert(response.message || 'Failed to approve', 'danger');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("❌ approveRequest error:", error);
+                    showAppAlert('Error approving request: ' + error, 'danger');
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error("❌ approveRequest error:", error);
-                alert('Error approving request: ' + error);
-            }
+            });
         });
     }
 
@@ -1235,37 +1235,37 @@
         var rejectComments = $('#rejectComments').val().trim();
 
         if (!rejectionReason) {
-            alert('Please select rejection reason');
+            showAppAlert('Please select rejection reason', 'warning');
             return;
         }
         if (!rejectComments) {
-            alert('Please enter rejection comments');
+            showAppAlert('Please enter rejection comments', 'warning');
             return;
         }
 
-        if (!confirm('Are you sure you want to REJECT this request?')) return;
-
-        $.ajax({
-            url: contextPath + '/views/replacement/ammanager/rejectRequest',
-            method: 'POST',
-            data: {
-                reqId: currentReqId,
-                rejectionReason: rejectionReason,
-                comments: rejectComments
-            },
-            success: function(response) {
-                console.log("✅ rejectRequest success:", response);
-                if (response.success) {
-                    alert('✅ ' + response.message);
-                    $('#rejectModal').modal('hide');
+        showAppConfirm('Are you sure you want to REJECT this request?', function() {
+            $.ajax({
+                url: contextPath + '/views/replacement/ammanager/rejectRequest',
+                method: 'POST',
+                data: {
+                    reqId: currentReqId,
+                    rejectionReason: rejectionReason,
+                    comments: rejectComments
+                },
+                success: function(response) {
+                    console.log("✅ rejectRequest success:", response);
+                    if (response.success) {
+                        showAppAlert(response.message, 'success');
+                        $('#rejectModal').modal('hide');
                     $('#commercialActionModal').modal('hide');
                     location.reload();
                 }
             },
             error: function(xhr, status, error) {
                 console.error("❌ rejectRequest error:", error);
-                alert('Error rejecting request: ' + error);
-            }
+                    showAppAlert('Error rejecting request: ' + error, 'danger');
+                }
+            });
         });
     }
 
@@ -1290,7 +1290,7 @@
         var forwardComments = $('#forwardComments').val().trim();
 
         if (!targetUserId) {
-            alert('Please select target user');
+            showAppAlert('Please select target user', 'warning');
             return;
         }
 
@@ -1305,14 +1305,14 @@
             },
             success: function(response) {
                 if (response.success) {
-                    alert('✅ ' + response.message);
+                    showAppAlert(response.message, 'success');
                     $('#forwardModal').modal('hide');
                     $('#commercialActionModal').modal('hide');
                     location.reload();
                 }
             },
             error: function(xhr, status, error) {
-                alert('Error forwarding request: ' + error);
+                showAppAlert('Error forwarding request: ' + error, 'danger');
             }
         });
     }
@@ -1542,14 +1542,14 @@
             function (resp) {
                 if (resp.success) {
                     $('#reminderModal').modal('hide');
-                    alert("✅ Reminder sent successfully!");
+                    showAppAlert("Reminder sent successfully!", "success");
                 } else {
-                    alert("❌ Failed: " + (resp.message || "Unknown error"));
+                    showAppAlert("Failed: " + (resp.message || "Unknown error"), "danger");
                 }
             },
             'json'
         ).fail(function () {
-            alert("❌ Network error. Please try again.");
+            showAppAlert("Network error. Please try again.", "danger");
         });
     }
 

@@ -17,11 +17,11 @@ function viewFullRequest(reqId) {
             if (response.success) {
                 displayFullRequest(response.data);
             } else {
-                alert('Error: ' + response.message);
+                showAppAlert(response.message, 'danger');
             }
         },
         error: function() {
-            alert('Failed to load request details');
+            showAppAlert('Failed to load request details', 'danger');
         }
     });
 }
@@ -112,11 +112,11 @@ function viewCurrentCommercials(reqId) {
             if (response.success) {
                 displayCurrentCommercials(response.data);
             } else {
-                alert('Error: ' + response.message);
+                showAppAlert(response.message, 'danger');
             }
         },
         error: function() {
-            alert('Failed to load commercials');
+            showAppAlert('Failed to load commercials', 'danger');
         }
     });
 }
@@ -197,7 +197,7 @@ function submitAMManagerRequest() {
     let comments = $('#amManagerComments').val().trim();
 
     if (!comments) {
-        alert('Please enter comments before submitting');
+        showAppAlert('Please enter comments before submitting', 'warning');
         return;
     }
 
@@ -214,15 +214,15 @@ function submitAMManagerRequest() {
         },
         success: function(response) {
             if (response.success) {
-                alert(response.message);
+                showAppAlert(response.message, 'success');
                 $('#fullRequestModal').modal('hide');
-                location.reload();
+                setTimeout(function() { location.reload(); }, 10000);
             } else {
-                alert('Error: ' + response.message);
+                showAppAlert(response.message, 'danger');
             }
         },
         error: function() {
-            alert('Failed to submit request');
+            showAppAlert('Failed to submit request', 'danger');
         }
     });
 }

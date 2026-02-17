@@ -1,13 +1,13 @@
 package com.ppcl.replacement.scheduler;
 
 import com.ppcl.replacement.util.DBConnectionPool;
+import com.ppcl.replacement.util.DateUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.time.*;
-import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -20,15 +20,12 @@ import java.util.logging.Logger;
  * Logic:
  * - Only update records where END_AT is NULL (ongoing stages)
  * - If END_AT is not null and TAT_PERCENTAGE is not null, ignore
- * - TAT is calculated based on working hours (Mon-Fri, 09:00-17:00)
+ * - TAT is calculated based on working hours (Mon-Fri, 09:00-17:00) via DateUtil
  * - 1 day = 8 working hours
  */
 public class TatPercentageScheduler {
 
     private static final Logger LOGGER = Logger.getLogger(TatPercentageScheduler.class.getName());
-    private static final ZoneId INDIA_TZ = ZoneId.of("Asia/Kolkata");
-    private static final LocalTime WORK_START = LocalTime.of(9, 0);
-    private static final LocalTime WORK_END = LocalTime.of(17, 0);
 
     private ScheduledExecutorService scheduler;
     private static TatPercentageScheduler instance;
@@ -114,8 +111,6 @@ public class TatPercentageScheduler {
                  final PreparedStatement updatePs = con.prepareStatement(updateSql);
                  final ResultSet rs = selectPs.executeQuery()) {
 
-                final LocalDateTime now = LocalDateTime.now(INDIA_TZ);
-
                 while (rs.next()) {
                     try {
                         final int eventId = rs.getInt("ID");
@@ -128,28 +123,11 @@ public class TatPercentageScheduler {
                             continue;
                         }
 
-                        final LocalDateTime startTime = startAt.toInstant()
-                                .atZone(INDIA_TZ)
-                                .toLocalDateTime();
-
                         // Use END_AT if available (completed stage), otherwise use current time
-                        final LocalDateTime endTime = (endAt != null)
-                                ? endAt.toInstant().atZone(INDIA_TZ).toLocalDateTime()
-                                : now;
+                        final Date endTime = (endAt != null) ? endAt : new Date();
 
-                        // Calculate working minutes elapsed
-                        final long actualMinutes = calculateWorkingMinutes(startTime, endTime);
-
-                        // Calculate TAT in minutes (1 day = 8 hours)
-                        final String unit = (tatUnit != null) ? tatUnit : "DAYS";
-                        final long tatMinutes = "HOURS".equalsIgnoreCase(unit)
-                                ? tatDuration * 60L
-                                : tatDuration * 8L * 60L;
-
-                        // Calculate percentage
-                        double percentage = tatMinutes > 0
-                                ? (actualMinutes * 100.0 / tatMinutes)
-                                : 0.0;
+                        // Calculate percentage using DateUtil
+                        double percentage = DateUtil.calculateTatPercentage(startAt, endTime, tatDuration, tatUnit);
 
                         // Round to 2 decimal places
                         percentage = Math.round(percentage * 100.0) / 100.0;
@@ -177,39 +155,5 @@ public class TatPercentageScheduler {
         } catch (final Exception e) {
             LOGGER.log(Level.SEVERE, "Error during TAT percentage update", e);
         }
-    }
-
-    /**
-     * Calculate working minutes between two LocalDateTime instances.
-     * Working hours: Mon-Fri, 09:00-17:00 (8 hours/day)
-     */
-    private long calculateWorkingMinutes(final LocalDateTime start, final LocalDateTime end) {
-        if (start == null || end == null || end.isBefore(start)) {
-            return 0;
-        }
-
-        long minutes = 0;
-        LocalDate currentDate = start.toLocalDate();
-        final LocalDate endDate = end.toLocalDate();
-
-        while (!currentDate.isAfter(endDate)) {
-            final DayOfWeek dow = currentDate.getDayOfWeek();
-            final boolean isWorkingDay = dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY;
-
-            if (isWorkingDay) {
-                final LocalDateTime dayStart = LocalDateTime.of(currentDate, WORK_START);
-                final LocalDateTime dayEnd = LocalDateTime.of(currentDate, WORK_END);
-
-                final LocalDateTime from = start.isAfter(dayStart) ? start : dayStart;
-                final LocalDateTime to = end.isBefore(dayEnd) ? end : dayEnd;
-
-                if (to.isAfter(from)) {
-                    minutes += ChronoUnit.MINUTES.between(from, to);
-                }
-            }
-            currentDate = currentDate.plusDays(1);
-        }
-
-        return minutes;
     }
 }

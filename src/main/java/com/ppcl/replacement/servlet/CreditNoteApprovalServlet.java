@@ -68,6 +68,7 @@ public class CreditNoteApprovalServlet extends BaseServlet {
         final int reqId = getIntParameter(request, "reqId");
         final String creditNoteNumber = request.getParameter("creditNoteNumber");
         final String comments = request.getParameter("comments");
+        final String location = request.getParameter("location");
 
         if (reqId == 0) {
             sendJsonError(response, "Request ID is required");
@@ -100,12 +101,14 @@ public class CreditNoteApprovalServlet extends BaseServlet {
             try {
                 final CreditNoteDAO creditNoteDAO = new CreditNoteDAO();
                 if (documentPath != null) {
-                    creditNoteDAO.approveCreditNoteWithDocument(con, reqId, creditNoteNumber, documentPath, comments);
+                    creditNoteDAO.approveCreditNoteWithDocument(con, reqId, location, creditNoteNumber, documentPath, comments);
                 } else {
-                    creditNoteDAO.approveCreditNotesByRequestId(con, reqId, creditNoteNumber, comments);
+                    creditNoteDAO.approveCreditNotesByRequestId(con, reqId, location, creditNoteNumber, comments);
                 }
 
-                transitionWorkflowDao.transitionFlow(con, reqId, commentText);
+                if (!creditNoteDAO.hasPendingCreditNotes(con, reqId)) {
+                    transitionWorkflowDao.transitionFlow(con, reqId, commentText);
+                }
 
                 con.commit();
                 sendJsonSuccess(response, "Credit note approved successfully", null);

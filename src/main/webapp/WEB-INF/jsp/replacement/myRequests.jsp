@@ -2189,7 +2189,7 @@
     function closeRequest() {
         var reqId = $('#editReqId').val();
         if (!reqId) {
-            alert('No request selected.');
+            showAppAlert('No request selected.', 'warning');
             return;
         }
         $('#closeReqIdHidden').val(reqId);
@@ -2203,7 +2203,7 @@
         var reason = $('#closeReasonText').val().trim();
 
         if (!reason) {
-            alert('Please enter a reason for closing.');
+            showAppAlert('Please enter a reason for closing.', 'warning');
             return;
         }
 
@@ -2221,15 +2221,15 @@
             success: function (resp) {
                 if (resp.success) {
                     $('#closeRequestModal').modal('hide');
-                    alert('✅ Request closed successfully!');
-                    location.reload();
+                    showAppAlert('Request closed successfully!', 'success');
+                    setTimeout(function() { location.reload(); }, 10000);
                 } else {
-                    alert('❌ Failed: ' + (resp.message || 'Unknown error'));
+                    showAppAlert('Failed: ' + (resp.message || 'Unknown error'), 'danger');
                     $('#btnConfirmClose').prop('disabled', false).html('<i class="fas fa-ban"></i> Confirm Close');
                 }
             },
             error: function () {
-                alert('❌ Network error. Please try again.');
+                showAppAlert('Network error. Please try again.', 'danger');
                 $('#btnConfirmClose').prop('disabled', false).html('<i class="fas fa-ban"></i> Confirm Close');
             }
         });
@@ -2273,15 +2273,15 @@
             success: function (resp) {
                 if (resp.success) {
                     $('#editRequestModal').modal('hide');
-                    alert('✅ Request updated successfully!');
-                    location.reload();
+                    showAppAlert('Request updated successfully!', 'success');
+                    setTimeout(function() { location.reload(); }, 10000);
                 } else {
-                    alert('❌ Failed: ' + (resp.message || 'Unknown error'));
+                    showAppAlert('Failed: ' + (resp.message || 'Unknown error'), 'danger');
                     $('#btnSaveEdit').prop('disabled', false).html('<i class="fas fa-save"></i> Save Changes');
                 }
             },
             error: function () {
-                alert('❌ Network error. Please try again.');
+                showAppAlert('Network error. Please try again.', 'danger');
                 $('#btnSaveEdit').prop('disabled', false).html('<i class="fas fa-save"></i> Save Changes');
             }
         });
@@ -2316,14 +2316,14 @@
             function (resp) {
                 if (resp.success) {
                     $('#reminderModal').modal('hide');
-                    alert("✅ Reminder sent successfully!");
+                    showAppAlert("Reminder sent successfully!", "success");
                 } else {
-                    alert("❌ Failed: " + (resp.message || "Unknown error"));
+                    showAppAlert("Failed: " + (resp.message || "Unknown error"), "danger");
                 }
             },
             'json'
         ).fail(function () {
-            alert("❌ Network error. Please try again.");
+            showAppAlert("Network error. Please try again.", "danger");
         });
     }
 
@@ -2348,62 +2348,58 @@
     function submitQuotation() {
         var reqId = $('#quotationReqIdHidden').val();
 
-        if (!confirm('Mark quotation as sent to client?')) {
-            return;
-        }
-
-        $.post(
-            contextPath + '/views/replacement/request',
-            {action: 'quotationSent', reqId: reqId},
-            function (resp) {
-                if (resp.success) {
-                    alert("✅ Quotation marked as sent. You can now upload PO when received.");
-                    $('#markQuotationSentBtn').prop('disabled', true);
-                    $('#approvalReceivedBtn').prop('disabled', false);
-                } else {
-                    alert("❌ Failed: " + (resp.message || "Unknown error"));
-                }
-            },
-            'json'
-        ).fail(function () {
-            alert("❌ Network error. Please try again.");
+        showAppConfirm('Mark quotation as sent to client?', function() {
+            $.post(
+                contextPath + '/views/replacement/request',
+                {action: 'quotationSent', reqId: reqId},
+                function (resp) {
+                    if (resp.success) {
+                        showAppAlert("Quotation marked as sent. You can now upload PO when received.", "success");
+                        $('#markQuotationSentBtn').prop('disabled', true);
+                        $('#approvalReceivedBtn').prop('disabled', false);
+                    } else {
+                        showAppAlert("Failed: " + (resp.message || "Unknown error"), "danger");
+                    }
+                },
+                'json'
+            ).fail(function () {
+                showAppAlert("Network error. Please try again.", "danger");
+            });
         });
     }
 
     function submitQuotationApprovalFromModal() {
         var reqId = $('#quotationReqIdHidden').val();
 
-        if (!confirm('Mark quotation approval as received?')) {
-            return;
-        }
-
-        var formData = new FormData();
-        formData.append('action', 'approvalReceived');
-        formData.append('reqId', reqId);
-        var fileInput = $('#quotationFile')[0];
-        if (fileInput.files.length > 0) {
-            formData.append('quotationFile', fileInput.files[0]);
-        }
-
-        $.ajax({
-            url: contextPath + '/views/replacement/request',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function (resp) {
-                if (resp.success) {
-                    $('#quotationModal').modal('hide');
-                    alert("✅ Approval received successfully!");
-                    location.reload();
-                } else {
-                    alert("❌ Failed: " + (resp.message || "Unknown error"));
-                }
-            },
-            error: function () {
-                alert("❌ Network error. Please try again.");
+        showAppConfirm('Mark quotation approval as received?', function() {
+            var formData = new FormData();
+            formData.append('action', 'approvalReceived');
+            formData.append('reqId', reqId);
+            var fileInput = $('#quotationFile')[0];
+            if (fileInput.files.length > 0) {
+                formData.append('quotationFile', fileInput.files[0]);
             }
+
+            $.ajax({
+                url: contextPath + '/views/replacement/request',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function (resp) {
+                    if (resp.success) {
+                        $('#quotationModal').modal('hide');
+                        showAppAlert("Approval received successfully!", "success");
+                        setTimeout(function() { location.reload(); }, 10000);
+                    } else {
+                        showAppAlert("Failed: " + (resp.message || "Unknown error"), "danger");
+                    }
+                },
+                error: function () {
+                    showAppAlert("Network error. Please try again.", "danger");
+                }
+            });
         });
     }
 
@@ -2488,38 +2484,36 @@
         var reqId = $('#quotationSentReqIdHidden').val();
         var comments = $('#quotationSentComments').val();
 
-        if (!confirm('Mark quotation approval as received?')) {
-            return;
-        }
-
-        var formData = new FormData();
-        formData.append('action', 'approvalReceived');
-        formData.append('reqId', reqId);
-        formData.append('comments', comments);
-        var fileInput = $('#poFile')[0];
-        if (fileInput.files.length > 0) {
-            formData.append('quotationFile', fileInput.files[0]);
-        }
-
-        $.ajax({
-            url: contextPath + '/views/replacement/request',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function (resp) {
-                if (resp.success) {
-                    $('#quotationSentModal').modal('hide');
-                    alert("✅ Approval received marked successfully!");
-                    location.reload();
-                } else {
-                    alert("❌ Failed: " + (resp.message || "Unknown error"));
-                }
-            },
-            error: function () {
-                alert("❌ Network error. Please try again.");
+        showAppConfirm('Mark quotation approval as received?', function() {
+            var formData = new FormData();
+            formData.append('action', 'approvalReceived');
+            formData.append('reqId', reqId);
+            formData.append('comments', comments);
+            var fileInput = $('#poFile')[0];
+            if (fileInput.files.length > 0) {
+                formData.append('quotationFile', fileInput.files[0]);
             }
+
+            $.ajax({
+                url: contextPath + '/views/replacement/request',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function (resp) {
+                    if (resp.success) {
+                        $('#quotationSentModal').modal('hide');
+                        showAppAlert("Approval received marked successfully!", "success");
+                        setTimeout(function() { location.reload(); }, 10000);
+                    } else {
+                        showAppAlert("Failed: " + (resp.message || "Unknown error"), "danger");
+                    }
+                },
+                error: function () {
+                    showAppAlert("Network error. Please try again.", "danger");
+                }
+            });
         });
     }
 
@@ -2553,13 +2547,13 @@
                     populateCreditNoteDetails(resp);
                     $('#creditNoteDetails').show();
                 } else {
-                    alert('❌ Failed to load details: ' + (resp.message || 'Unknown error'));
+                    showAppAlert('Failed to load details: ' + (resp.message || 'Unknown error'), 'danger');
                     $('#creditNoteModal').modal('hide');
                 }
             },
             error: function () {
                 $('#creditNoteLoading').hide();
-                alert('❌ Network error. Please try again.');
+                showAppAlert('Network error. Please try again.', 'danger');
                 $('#creditNoteModal').modal('hide');
             }
         });
@@ -2724,7 +2718,7 @@
         $('#creditNoteTotalAmount').text('₹' + grandTotal.toLocaleString('en-IN'));
 
         $('#locationCreditNoteModal').modal('hide');
-        alert('✅ Credit note details saved for ' + $('#locationCreditNoteLocation').text());
+        showAppAlert('Credit note details saved for ' + $('#locationCreditNoteLocation').text(), 'success');
     }
 
     function closeLocationCreditNoteModal() {
@@ -2746,11 +2740,11 @@
         var comment = $('#creditNoteForwardComment').val().trim();
 
         if (!manager) {
-            alert('Please select a manager.');
+            showAppAlert('Please select a manager.', 'warning');
             return;
         }
         if (!comment) {
-            alert('Please enter a comment.');
+            showAppAlert('Please enter a comment.', 'warning');
             return;
         }
 
@@ -2768,15 +2762,15 @@
             function (resp) {
                 if (resp.success) {
                     $('#creditNoteModal').modal('hide');
-                    alert('✅ Request forwarded to ' + managerName);
-                    location.reload();
+                    showAppAlert('Request forwarded to ' + managerName, 'success');
+                    setTimeout(function() { location.reload(); }, 10000);
                 } else {
-                    alert('❌ Failed: ' + (resp.message || 'Unknown error'));
+                    showAppAlert('Failed: ' + (resp.message || 'Unknown error'), 'danger');
                 }
             },
             'json'
         ).fail(function () {
-            alert('❌ Network error. Please try again.');
+            showAppAlert('Network error. Please try again.', 'danger');
         });
     }
 
@@ -2784,35 +2778,33 @@
         var savedCount = Object.keys(creditNoteData.savedLocations).length;
 
         if (savedCount === 0) {
-            alert('Please add credit note details for at least one location.');
+            showAppAlert('Please add credit note details for at least one location.', 'warning');
             return;
         }
 
-        if (!confirm('Forward credit note to Billing team?')) {
-            return;
-        }
+        showAppConfirm('Forward credit note to Billing team?', function() {
+            var reqId = $('#creditNoteReqIdHidden').val();
 
-        var reqId = $('#creditNoteReqIdHidden').val();
-
-        $.post(
-            contextPath + '/views/replacement/request',
-            {
-                action: 'submitCreditNote',
-                reqId: reqId,
-                locationData: JSON.stringify(creditNoteData.savedLocations)
-            },
-            function (resp) {
-                if (resp.success) {
-                    $('#creditNoteModal').modal('hide');
-                    alert('✅ Credit note forwarded to Billing team successfully!');
-                    location.reload();
-                } else {
-                    alert('❌ Failed: ' + (resp.message || 'Unknown error'));
-                }
-            },
-            'json'
-        ).fail(function () {
-            alert('❌ Network error. Please try again.');
+            $.post(
+                contextPath + '/views/replacement/request',
+                {
+                    action: 'submitCreditNote',
+                    reqId: reqId,
+                    locationData: JSON.stringify(creditNoteData.savedLocations)
+                },
+                function (resp) {
+                    if (resp.success) {
+                        $('#creditNoteModal').modal('hide');
+                        showAppAlert('Credit note forwarded to Billing team successfully!', 'success');
+                        setTimeout(function() { location.reload(); }, 10000);
+                    } else {
+                        showAppAlert('Failed: ' + (resp.message || 'Unknown error'), 'danger');
+                    }
+                },
+                'json'
+            ).fail(function () {
+                showAppAlert('Network error. Please try again.', 'danger');
+            });
         });
     }
 
@@ -2826,7 +2818,7 @@
         var reason = $('#creditNoteNoActionReason').val().trim();
 
         if (!reason) {
-            alert('Please provide a reason for no action.');
+            showAppAlert('Please provide a reason for no action.', 'warning');
             return;
         }
 
@@ -2841,15 +2833,15 @@
                 if (resp.success) {
                     $('#creditNoteNoActionModal').modal('hide');
                     $('#creditNoteModal').modal('hide');
-                    alert('✅ Request marked as "No Action Required".');
-                    location.reload();
+                    showAppAlert('Request marked as "No Action Required".', 'success');
+                    setTimeout(function() { location.reload(); }, 10000);
                 } else {
-                    alert('❌ Failed: ' + (resp.message || 'Unknown error'));
+                    showAppAlert('Failed: ' + (resp.message || 'Unknown error'), 'danger');
                 }
             },
             'json'
         ).fail(function () {
-            alert('❌ Network error. Please try again.');
+            showAppAlert('Network error. Please try again.', 'danger');
         });
     }
 
