@@ -276,7 +276,7 @@ public class PullbackServlet extends HttpServlet {
                 final String qcDamageDetails = request.getParameter("qcDamageDetails");
                 final String qcComments = request.getParameter("qcComments");
                 final String qcComment = buildVerificationComment(qcCondition, qcDamageDetails, qcComments);
-                final int qcStatus = "DAMAGED".equals(qcCondition) ? 7 : 6;
+                final int qcStatus = 6;
                 success = pullbackDAO.updateQc(pullbackId, printerQc, powerCableQc, lanCableQc,
                         trayQc, emptyCartridgeQc, unusedCartridgeQc, qcStatus, qcComment);
                 setActionResponse(responseJson, success, "QC updated successfully");

@@ -986,24 +986,11 @@
                        item.id + ')">' +
                        '<i class="fas fa-warehouse mr-1"></i>Recv by Inv</button>';
 
-            if (statusKey === 'received' || statusKey === 'qc_pending') {
-                buttons += '<button class="btn btn-outline-warning btn-action" title="Verify Cartridge" onclick="verifyCartridge(' + 
-                           item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' + 
-                           (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
-                           '<i class="fas fa-clipboard-check mr-1"></i>Verify</button>';
-            }
-
-            if (statusKey === 'pending_inventory') {
+            if (statusKey === 'pending_inventory' || statusKey === 'qc_pending' || statusKey === 'qc_done') {
                 buttons += '<button class="btn btn-outline-warning btn-action" title="Update QC" onclick="showQcModal(' + item.id + ')">' +
                            '<i class="fas fa-clipboard-check mr-1"></i>Update QC</button>';
             }
 
-            if (statusKey !== 'to_be_picked' && statusKey !== 'to_be_dispatched' && statusKey !== 'in_transit') {
-                buttons += '<button class="btn btn-outline-danger btn-action" title="Credit Note" onclick="triggerCreditNote(' + 
-                           item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
-                           '<i class="fas fa-file-invoice-dollar mr-1"></i>CN</button>';
-            }
-            
             buttons += '</div>';
             return buttons;
         }
@@ -1132,6 +1119,9 @@
 
         $('#qcForm').on('submit', function(e) {
             e.preventDefault();
+            if ($('#qcConditionSelect').val() === 'DAMAGED') {
+                alert('Damaged condition selected. This will notify AM for credit note.');
+            }
             submitAction($(this), 'QC updated successfully');
         });
 

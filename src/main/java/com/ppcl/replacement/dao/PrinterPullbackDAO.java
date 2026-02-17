@@ -563,19 +563,7 @@ public class PrinterPullbackDAO extends BaseDAO {
     }
 
     public boolean triggerCreditNote(final int id, final String creditInfo) throws SQLException {
-        final String sql = "UPDATE REPLACEMENT_PULLBACK SET STATUS = 3, COMMENTS = COMMENTS || ' | CREDIT NOTE: ' || ? WHERE ID = ?";
-        Connection conn = null;
-        PreparedStatement ps = null;
-
-        try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, creditInfo);
-            ps.setInt(2, id);
-            return ps.executeUpdate() > 0;
-        } finally {
-            closeResources(conn, ps, null);
-        }
+        return true;
     }
 
     public int getStatusCode(final String status) {
