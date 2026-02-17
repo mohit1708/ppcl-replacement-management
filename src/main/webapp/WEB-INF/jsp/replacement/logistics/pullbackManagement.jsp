@@ -532,6 +532,98 @@
         </div>
     </div>
 
+    <!-- Update QC Modal -->
+    <div class="modal fade" id="qcModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-clipboard-check mr-2"></i>Update QC</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <form id="qcForm">
+                    <input type="hidden" name="pullbackId" id="qcPullbackId">
+                    <input type="hidden" name="action" value="updateQc">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-box-open mr-1"></i> Pickup Checklist</h6>
+                                <table class="table table-sm table-bordered">
+                                    <tr><th>Printer</th><td id="qcPrinter">-</td></tr>
+                                    <tr><th>Power Cable</th><td id="qcPowerCable">-</td></tr>
+                                    <tr><th>LAN Cable</th><td id="qcLanCable">-</td></tr>
+                                    <tr><th>Tray</th><td id="qcTray">-</td></tr>
+                                    <tr><th>Empty Cartridge</th><td id="qcEmptyCartridge">-</td></tr>
+                                    <tr><th>Unused Cartridge</th><td id="qcUnusedCartridge">-</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-clipboard-check mr-1"></i> QC Verification</h6>
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="qcPrinterQc" name="printerQc" value="1">
+                                        <label class="custom-control-label" for="qcPrinterQc">Printer QC</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="qcPowerCableQc" name="powerCableQc" value="1">
+                                        <label class="custom-control-label" for="qcPowerCableQc">Power Cable QC</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="qcLanCableQc" name="lanCableQc" value="1">
+                                        <label class="custom-control-label" for="qcLanCableQc">LAN Cable QC</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="qcTrayQc" name="trayQc" value="1">
+                                        <label class="custom-control-label" for="qcTrayQc">Tray QC</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="small font-weight-bold">Empty Cartridge QC</label>
+                                    <input type="number" class="form-control form-control-sm" name="emptyCartridgeQc" id="qcEmptyCartridgeQc" min="0" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label class="small font-weight-bold">Unused Cartridge QC</label>
+                                    <input type="number" class="form-control form-control-sm" name="unusedCartridgeQc" id="qcUnusedCartridgeQc" min="0" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="fas fa-heartbeat mr-1"></i> Condition Assessment</h6>
+                        <div class="form-group">
+                            <label><strong>Overall Condition</strong> <span class="text-danger">*</span></label>
+                            <select class="form-control" name="qcCondition" id="qcConditionSelect" required>
+                                <option value="">Select Condition</option>
+                                <option value="GOOD">Good - All items in acceptable condition</option>
+                                <option value="MINOR_DAMAGE">Minor Damage - Some wear but functional</option>
+                                <option value="DAMAGED">Damaged - Requires credit note</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="qcDamageDetailsGroup" style="display: none;">
+                            <label><strong>Damage Details</strong> <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="qcDamageDetails" id="qcDamageDetails" rows="3"
+                                      placeholder="Describe the damage in detail..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label><strong>QC Comments</strong></label>
+                            <textarea class="form-control" name="qcComments" id="qcComments" rows="2"
+                                      placeholder="Additional comments..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save mr-1"></i> Save QC
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Credit Note Modal -->
     <div class="modal fade" id="creditNoteModal" tabindex="-1">
         <div class="modal-dialog">
@@ -598,6 +690,16 @@
                 } else {
                     $('#damageDetailsGroup').hide();
                     $('#damageDetails').prop('required', false);
+                }
+            });
+
+            $('#qcConditionSelect').on('change', function() {
+                if ($(this).val() === 'DAMAGED') {
+                    $('#qcDamageDetailsGroup').show();
+                    $('#qcDamageDetails').prop('required', true);
+                } else {
+                    $('#qcDamageDetailsGroup').hide();
+                    $('#qcDamageDetails').prop('required', false);
                 }
             });
 
@@ -892,9 +994,7 @@
             }
 
             if (statusKey === 'pending_inventory') {
-                buttons += '<button class="btn btn-outline-warning btn-action" title="Update QC" onclick="verifyCartridge(' +
-                           item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' +
-                           (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
+                buttons += '<button class="btn btn-outline-warning btn-action" title="Update QC" onclick="showQcModal(' + item.id + ')">' +
                            '<i class="fas fa-clipboard-check mr-1"></i>Update QC</button>';
             }
 
@@ -940,6 +1040,30 @@
             $('#recReqId').text('#' + reqId);
             $('#recSerialNo').text(serialNo);
             $('#receivedModal').modal('show');
+        }
+
+        function showQcModal(id) {
+            var item = pullbackDataMap[id];
+            if (!item) return;
+            var chk = function(v) { return v == 1 ? '<i class="fas fa-check-circle text-success"></i> Yes' : '<i class="fas fa-times-circle text-danger"></i> No'; };
+            $('#qcPullbackId').val(id);
+            $('#qcPrinter').html(chk(item.printer));
+            $('#qcPowerCable').html(chk(item.powerCable));
+            $('#qcLanCable').html(chk(item.lanCable));
+            $('#qcTray').html(chk(item.tray));
+            $('#qcEmptyCartridge').text(item.emptyCartridge || 0);
+            $('#qcUnusedCartridge').text(item.unusedCartridge || 0);
+            $('#qcPrinterQc').prop('checked', item.printerQc == 1);
+            $('#qcPowerCableQc').prop('checked', item.powerCableQc == 1);
+            $('#qcLanCableQc').prop('checked', item.lanCableQc == 1);
+            $('#qcTrayQc').prop('checked', item.trayQc == 1);
+            $('#qcEmptyCartridgeQc').val(item.emptyCartridgeQc || 0);
+            $('#qcUnusedCartridgeQc').val(item.unusedCartridgeQc || 0);
+            $('#qcConditionSelect').val('');
+            $('#qcDamageDetailsGroup').hide();
+            $('#qcDamageDetails').val('').prop('required', false);
+            $('#qcComments').val('');
+            $('#qcModal').modal('show');
         }
 
         function receivedByInventory(id) {
@@ -1004,6 +1128,11 @@
         $('#verifyForm').on('submit', function(e) {
             e.preventDefault();
             submitAction($(this), 'Verification saved successfully');
+        });
+
+        $('#qcForm').on('submit', function(e) {
+            e.preventDefault();
+            submitAction($(this), 'QC updated successfully');
         });
 
         $('#creditNoteForm').on('submit', function(e) {

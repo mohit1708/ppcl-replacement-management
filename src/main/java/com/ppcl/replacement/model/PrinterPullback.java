@@ -32,6 +32,12 @@ public class PrinterPullback {
     private Integer unusedCartridge;
     private String pullbackMode;
     private Integer replacementPrinterDetailsId;
+    private int printerQc;
+    private int powerCableQc;
+    private int lanCableQc;
+    private int trayQc;
+    private int emptyCartridgeQc;
+    private int unusedCartridgeQc;
 
     // Display fields (joined from other tables)
     private String clientName;
@@ -320,4 +326,17 @@ public class PrinterPullback {
     public void setReplacementPrinterDetailsId(final Integer replacementPrinterDetailsId) {
         this.replacementPrinterDetailsId = replacementPrinterDetailsId;
     }
+
+    public int getPrinterQc() { return printerQc; }
+    public void setPrinterQc(final int printerQc) { this.printerQc = printerQc; }
+    public int getPowerCableQc() { return powerCableQc; }
+    public void setPowerCableQc(final int powerCableQc) { this.powerCableQc = powerCableQc; }
+    public int getLanCableQc() { return lanCableQc; }
+    public void setLanCableQc(final int lanCableQc) { this.lanCableQc = lanCableQc; }
+    public int getTrayQc() { return trayQc; }
+    public void setTrayQc(final int trayQc) { this.trayQc = trayQc; }
+    public int getEmptyCartridgeQc() { return emptyCartridgeQc; }
+    public void setEmptyCartridgeQc(final int emptyCartridgeQc) { this.emptyCartridgeQc = emptyCartridgeQc; }
+    public int getUnusedCartridgeQc() { return unusedCartridgeQc; }
+    public void setUnusedCartridgeQc(final int unusedCartridgeQc) { this.unusedCartridgeQc = unusedCartridgeQc; }
 }

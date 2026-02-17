@@ -129,6 +129,7 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.TRAY, p.EMPTY_CARTRIDGE,
                        poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
                        p.PULLBACK_MODE,
+                       p.PRINTER_QC, p.POWER_CABLE_QC, p.LAN_CABLE_QC, p.TRAY_QC, p.EMPTY_CARTRIDGE_QC, p.UNUSED_CARTRIDGE_QC,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -232,6 +233,7 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.TRAY, p.EMPTY_CARTRIDGE,
                        poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
                        p.PULLBACK_MODE,
+                       p.PRINTER_QC, p.POWER_CABLE_QC, p.LAN_CABLE_QC, p.TRAY_QC, p.EMPTY_CARTRIDGE_QC, p.UNUSED_CARTRIDGE_QC,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -272,6 +274,7 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.TRAY, p.EMPTY_CARTRIDGE,
                        poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
                        p.PULLBACK_MODE,
+                       p.PRINTER_QC, p.POWER_CABLE_QC, p.LAN_CABLE_QC, p.TRAY_QC, p.EMPTY_CARTRIDGE_QC, p.UNUSED_CARTRIDGE_QC,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -315,6 +318,7 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
                        p.TRAY, p.EMPTY_CARTRIDGE, p.UNUSED_CARTRIDGE, p.PULLBACK_MODE,
+                       p.PRINTER_QC, p.POWER_CABLE_QC, p.LAN_CABLE_QC, p.TRAY_QC, p.EMPTY_CARTRIDGE_QC, p.UNUSED_CARTRIDGE_QC,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -421,6 +425,7 @@ public class PrinterPullbackDAO extends BaseDAO {
                        p.TRAY, p.EMPTY_CARTRIDGE,
                        poi.CART_PICKUP_QUANITY AS UNUSED_CARTRIDGE,
                        p.PULLBACK_MODE,
+                       p.PRINTER_QC, p.POWER_CABLE_QC, p.LAN_CABLE_QC, p.TRAY_QC, p.EMPTY_CARTRIDGE_QC, p.UNUSED_CARTRIDGE_QC,
                        p.REPLACEMENT_PRINTER_DETAILS_ID,
                        c.NAME AS CLIENT_NAME,
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
@@ -474,6 +479,35 @@ public class PrinterPullbackDAO extends BaseDAO {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, status);
             ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } finally {
+            closeResources(conn, ps, null);
+        }
+    }
+
+    public boolean updateQc(final int id, final int printerQc, final int powerCableQc, final int lanCableQc,
+                             final int trayQc, final int emptyCartridgeQc, final int unusedCartridgeQc,
+                             final int status, final String comments) throws SQLException {
+        final String sql = """
+                UPDATE REPLACEMENT_PULLBACK SET
+                    PRINTER_QC = ?, POWER_CABLE_QC = ?, LAN_CABLE_QC = ?, TRAY_QC = ?,
+                    EMPTY_CARTRIDGE_QC = ?, UNUSED_CARTRIDGE_QC = ?, STATUS = ?, COMMENTS = ?
+                WHERE ID = ?
+                """;
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, printerQc);
+            ps.setInt(2, powerCableQc);
+            ps.setInt(3, lanCableQc);
+            ps.setInt(4, trayQc);
+            ps.setInt(5, emptyCartridgeQc);
+            ps.setInt(6, unusedCartridgeQc);
+            ps.setInt(7, status);
+            ps.setString(8, comments);
+            ps.setInt(9, id);
             return ps.executeUpdate() > 0;
         } finally {
             closeResources(conn, ps, null);
@@ -773,6 +807,12 @@ public class PrinterPullbackDAO extends BaseDAO {
         p.setUnusedCartridge(rs.getObject("UNUSED_CARTRIDGE") != null ? rs.getInt("UNUSED_CARTRIDGE") : null);
         p.setPullbackMode(rs.getString("PULLBACK_MODE"));
         p.setReplacementPrinterDetailsId(rs.getObject("REPLACEMENT_PRINTER_DETAILS_ID") != null ? rs.getInt("REPLACEMENT_PRINTER_DETAILS_ID") : null);
+        p.setPrinterQc(rs.getInt("PRINTER_QC"));
+        p.setPowerCableQc(rs.getInt("POWER_CABLE_QC"));
+        p.setLanCableQc(rs.getInt("LAN_CABLE_QC"));
+        p.setTrayQc(rs.getInt("TRAY_QC"));
+        p.setEmptyCartridgeQc(rs.getInt("EMPTY_CARTRIDGE_QC"));
+        p.setUnusedCartridgeQc(rs.getInt("UNUSED_CARTRIDGE_QC"));
         p.setClientName(rs.getString("CLIENT_NAME"));
         p.setPrinterModelName(rs.getString("PRINTER_MODEL_NAME"));
         p.setReplacementReqNo(rs.getString("REPLACEMENT_REQ_NO"));

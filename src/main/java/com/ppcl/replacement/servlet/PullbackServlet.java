@@ -265,6 +265,23 @@ public class PullbackServlet extends HttpServlet {
                 setActionResponse(responseJson, success, "Marked as received by inventory");
                 break;
 
+            case "updateQc":
+                final int printerQc = parseIntOrDefault(request.getParameter("printerQc"), 0);
+                final int powerCableQc = parseIntOrDefault(request.getParameter("powerCableQc"), 0);
+                final int lanCableQc = parseIntOrDefault(request.getParameter("lanCableQc"), 0);
+                final int trayQc = parseIntOrDefault(request.getParameter("trayQc"), 0);
+                final int emptyCartridgeQc = parseIntOrDefault(request.getParameter("emptyCartridgeQc"), 0);
+                final int unusedCartridgeQc = parseIntOrDefault(request.getParameter("unusedCartridgeQc"), 0);
+                final String qcCondition = request.getParameter("qcCondition");
+                final String qcDamageDetails = request.getParameter("qcDamageDetails");
+                final String qcComments = request.getParameter("qcComments");
+                final String qcComment = buildVerificationComment(qcCondition, qcDamageDetails, qcComments);
+                final int qcStatus = "DAMAGED".equals(qcCondition) ? 7 : 6;
+                success = pullbackDAO.updateQc(pullbackId, printerQc, powerCableQc, lanCableQc,
+                        trayQc, emptyCartridgeQc, unusedCartridgeQc, qcStatus, qcComment);
+                setActionResponse(responseJson, success, "QC updated successfully");
+                break;
+
             case "triggerCreditNote":
                 success = handleTriggerCreditNote(pullbackId, request);
                 setActionResponse(responseJson, success, "Credit note workflow initiated");
@@ -424,6 +441,12 @@ public class PullbackServlet extends HttpServlet {
         json.addProperty("emptyCartridge", p.getEmptyCartridge());
         json.addProperty("unusedCartridge", p.getUnusedCartridge());
         json.addProperty("pullbackMode", p.getPullbackMode());
+        json.addProperty("printerQc", p.getPrinterQc());
+        json.addProperty("powerCableQc", p.getPowerCableQc());
+        json.addProperty("lanCableQc", p.getLanCableQc());
+        json.addProperty("trayQc", p.getTrayQc());
+        json.addProperty("emptyCartridgeQc", p.getEmptyCartridgeQc());
+        json.addProperty("unusedCartridgeQc", p.getUnusedCartridgeQc());
         json.addProperty("clientName", p.getClientName());
         json.addProperty("printerModelName", p.getPrinterModelName());
         return json;
