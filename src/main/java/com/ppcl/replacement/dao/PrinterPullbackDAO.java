@@ -303,6 +303,47 @@ public class PrinterPullbackDAO extends BaseDAO {
         return null;
     }
 
+    /**
+     * Fetch raw pullback row for update operations.
+     * Uses REPLACEMENT_PULLBACK.UNUSED_CARTRIDGE directly (no POI override).
+     */
+    public PrinterPullback getPullbackByIdForUpdate(final int id) throws SQLException {
+        final String sql = """
+                SELECT p.ID, p.REPLACEMENT_REQ_ID, p.CALL_ID, p.CLIENT_DOT_ID, p.LOCATION,
+                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS, p.COURIER_ID,
+                       p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
+                       p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
+                       p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
+                       p.TRAY, p.EMPTY_CARTRIDGE, p.UNUSED_CARTRIDGE, p.PULLBACK_MODE,
+                       p.REPLACEMENT_PRINTER_DETAILS_ID,
+                       c.NAME AS CLIENT_NAME,
+                       pm.MODEL_NAME AS PRINTER_MODEL_NAME,
+                       'REQ-' || LPAD(p.REPLACEMENT_REQ_ID, 4, '0') AS REPLACEMENT_REQ_NO
+                FROM REPLACEMENT_PULLBACK p
+                LEFT JOIN CLIENT c ON c.ID = p.CLIENT_DOT_ID
+                LEFT JOIN P_MODEL pm ON pm.ID = p.P_MODEL
+                WHERE p.ID = ?
+                """;
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, id);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapResultSet(rs);
+            }
+        } finally {
+            closeResources(conn, ps, rs);
+        }
+        return null;
+    }
+
     public void markAsReceived(final int id, final String comments, final int printer, final int powerCable,
                                final int lanCable, final int tray, final Integer emptyCartridge,
                                final Integer unusedCartridge) throws SQLException {
@@ -373,7 +414,7 @@ public class PrinterPullbackDAO extends BaseDAO {
         final List<PrinterPullback> list = new ArrayList<>();
         final StringBuilder sql = new StringBuilder("""
                 SELECT p.ID, p.REPLACEMENT_REQ_ID, p.CALL_ID, p.CLIENT_DOT_ID, p.LOCATION,
-                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS, p.COURIER_ID,
+                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, tpm.DESCRIPTION as STATUS, p.COURIER_ID,
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
@@ -385,6 +426,7 @@ public class PrinterPullbackDAO extends BaseDAO {
                        pm.MODEL_NAME AS PRINTER_MODEL_NAME,
                        'REQ-' || LPAD(p.REPLACEMENT_REQ_ID, 4, '0') AS REPLACEMENT_REQ_NO
                 FROM REPLACEMENT_PULLBACK p
+                LEFT JOIN TAT_PRINTER_MASTER TPM on p.STATUS=tpm.ID
                 LEFT JOIN CLIENT c ON c.ID = p.CLIENT_DOT_ID
                 LEFT JOIN P_MODEL pm ON pm.ID = p.P_MODEL
                 LEFT JOIN REPLACEMENT_PRINTER_DETAILS rpd ON rpd.ID = p.REPLACEMENT_PRINTER_DETAILS_ID
@@ -419,6 +461,23 @@ public class PrinterPullbackDAO extends BaseDAO {
             closeResources(conn, ps, rs);
         }
         return list;
+    }
+
+    public boolean updateStatusOnly(final int id, final int status) throws SQLException {
+        final String sql = "UPDATE REPLACEMENT_PULLBACK SET STATUS = ? WHERE ID = ?";
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, status);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } finally {
+            closeResources(conn, ps, null);
+        }
     }
 
     public boolean updateStatus(final int id, final int status, final String pickedBy, final String comments) throws SQLException {
@@ -615,7 +674,7 @@ public class PrinterPullbackDAO extends BaseDAO {
         pullback.setLocation(client.getBranch());                       // LOCATION from CLIENT
         pullback.setPrinterModel(printer.getExistingPModelId());        // P_MODEL (ID) from REPLACEMENT_PRINTER_DETAILS
         pullback.setSerialNo(printer.getExistingSerial());              // P_SERIAL_NO
-        pullback.setStatus(0);                                          // STATUS = 1
+        pullback.setStatus(1);                                          // STATUS = 1
 
         if (mapping != null) {
             // ── Scenario 1: Courier Pincode Mapping Exists ──
@@ -694,7 +753,7 @@ public class PrinterPullbackDAO extends BaseDAO {
         p.setPrinterModel(rs.getObject("P_MODEL") != null ? rs.getInt("P_MODEL") : null);
         p.setSerialNo(rs.getString("P_SERIAL_NO"));
         p.setPickedBy(rs.getString("PICKED_BY"));
-        p.setStatus(rs.getObject("STATUS") != null ? rs.getInt("STATUS") : null);
+        p.setUiStatus(rs.getObject("STATUS") != null ? rs.getString("STATUS") : null);
         p.setCourierId(rs.getObject("COURIER_ID") != null ? rs.getInt("COURIER_ID") : null);
         p.setCourierName(rs.getString("COURIER_NAME"));
         p.setConsignmentNo(rs.getString("CONSIGNMENT_NO"));

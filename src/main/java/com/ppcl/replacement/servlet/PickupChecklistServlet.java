@@ -72,18 +72,18 @@ public class PickupChecklistServlet extends HttpServlet {
 
                     // Validate checklist - all items must be present for success
                     if (!printer || !powerCable || !lanCable || !tray) {
-                        // Update with mismatch status
+                        // Update with mismatch status (do not change status to 2)
                         updatePullbackChecklist(conn, replacementRequestId, printerSerialNo,
-                                printer, powerCable, lanCable, tray, emptyCartridges, unusedCartridge);
+                                printer, powerCable, lanCable, tray, emptyCartridges, unusedCartridge, false);
                         detail.addProperty("message", "PICKUP_MISMATCH");
                         allSuccess = false;
                         detailsArray.add(detail);
                         continue;
                     }
 
-                    // Update checklist
+                    // Update checklist and set status to 2 on success
                     final boolean updated = updatePullbackChecklist(conn, replacementRequestId, printerSerialNo,
-                            printer, powerCable, lanCable, tray, emptyCartridges, unusedCartridge);
+                            printer, powerCable, lanCable, tray, emptyCartridges, unusedCartridge, true);
 
                     if (updated) {
                         detail.addProperty("message", "Updated Successfully");
@@ -128,7 +128,8 @@ public class PickupChecklistServlet extends HttpServlet {
 
     private boolean updatePullbackChecklist(final Connection conn, final String requestId, final String serialNo,
                                             final boolean printer, final boolean powerCable, final boolean lanCable,
-                                            final boolean tray, final int emptyCartridges, final int unusedCartridge) throws Exception {
+                                            final boolean tray, final int emptyCartridges, final int unusedCartridge,
+                                            final boolean updateStatus) throws Exception {
 
         // Check if pullback record exists
         final String checkSql = "SELECT ID FROM REPLACEMENT_PULLBACK WHERE REPLACEMENT_REQ_ID = ? AND P_SERIAL_NO = ?";
@@ -145,38 +146,41 @@ public class PickupChecklistServlet extends HttpServlet {
         }
 
         if (pullbackId != null) {
-            // Update existing record
-            final String updateSql = "UPDATE REPLACEMENT_PULLBACK SET " +
-                    "PRINTER = ?, POWER_CABLE = ?, LAN_CABLE = ?, TRAY = ?, " +
-                    "EMPTY_CARTRIDGE = ?, UNUSED_CARTRIDGE = ? " +
-                    "WHERE ID = ?";
-            try (final PreparedStatement ps = conn.prepareStatement(updateSql)) {
-                ps.setInt(1, printer ? 1 : 0);
-                ps.setInt(2, powerCable ? 1 : 0);
-                ps.setInt(3, lanCable ? 1 : 0);
-                ps.setInt(4, tray ? 1 : 0);
-                ps.setInt(5, emptyCartridges);
-                ps.setInt(6, unusedCartridge);
-                ps.setInt(7, pullbackId);
-                return ps.executeUpdate() > 0;
-            }
-        } else {
-            // Insert new record
-            final String insertSql = "INSERT INTO REPLACEMENT_PULLBACK " +
-                    "(REPLACEMENT_REQ_ID, P_SERIAL_NO, PRINTER, POWER_CABLE, LAN_CABLE, TRAY, " +
-                    "EMPTY_CARTRIDGE, UNUSED_CARTRIDGE) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            try (final PreparedStatement ps = conn.prepareStatement(insertSql)) {
-                ps.setInt(1, Integer.parseInt(requestId));
-                ps.setString(2, serialNo);
-                ps.setInt(3, printer ? 1 : 0);
-                ps.setInt(4, powerCable ? 1 : 0);
-                ps.setInt(5, lanCable ? 1 : 0);
-                ps.setInt(6, tray ? 1 : 0);
-                ps.setInt(7, emptyCartridges);
-                ps.setInt(8, unusedCartridge);
-                return ps.executeUpdate() > 0;
+            if (updateStatus) {
+                // Update existing record with status = 2
+                final String updateSql = "UPDATE REPLACEMENT_PULLBACK SET " +
+                        "PRINTER = ?, POWER_CABLE = ?, LAN_CABLE = ?, TRAY = ?, " +
+                        "EMPTY_CARTRIDGE = ?, UNUSED_CARTRIDGE = ?, STATUS = ? " +
+                        "WHERE ID = ?";
+                try (final PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setInt(1, printer ? 1 : 0);
+                    ps.setInt(2, powerCable ? 1 : 0);
+                    ps.setInt(3, lanCable ? 1 : 0);
+                    ps.setInt(4, tray ? 1 : 0);
+                    ps.setInt(5, emptyCartridges);
+                    ps.setInt(6, unusedCartridge);
+                    ps.setInt(7, 2);
+                    ps.setInt(8, pullbackId);
+                    return ps.executeUpdate() > 0;
+                }
+            } else {
+                // Update existing record without changing status
+                final String updateSql = "UPDATE REPLACEMENT_PULLBACK SET " +
+                        "PRINTER = ?, POWER_CABLE = ?, LAN_CABLE = ?, TRAY = ?, " +
+                        "EMPTY_CARTRIDGE = ?, UNUSED_CARTRIDGE = ? " +
+                        "WHERE ID = ?";
+                try (final PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setInt(1, printer ? 1 : 0);
+                    ps.setInt(2, powerCable ? 1 : 0);
+                    ps.setInt(3, lanCable ? 1 : 0);
+                    ps.setInt(4, tray ? 1 : 0);
+                    ps.setInt(5, emptyCartridges);
+                    ps.setInt(6, unusedCartridge);
+                    ps.setInt(7, pullbackId);
+                    return ps.executeUpdate() > 0;
+                }
             }
         }
+        return false;
     }
 }

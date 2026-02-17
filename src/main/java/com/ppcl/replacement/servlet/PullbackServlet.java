@@ -203,10 +203,22 @@ public class PullbackServlet extends HttpServlet {
         final PrinterPullback pullback = mapFromJson(body);
         pullback.setReplacementReqId(replacementReqId);
         pullback.setSerialNo(pSerialNo);
+        pullback.setStatus(3);
 
         final Integer existingId = pullbackDAO.getExistingPullbackId(replacementReqId, pSerialNo);
 
         if (existingId != null) {
+            // Fetch existing record and preserve fields not provided in the request
+            final PrinterPullback existing = pullbackDAO.getPullbackByIdForUpdate(existingId);
+            if (existing != null) {
+                if (pullback.getCallId() == null) pullback.setCallId(existing.getCallId());
+                if (pullback.getClientDotId() == null) pullback.setClientDotId(existing.getClientDotId());
+                if (pullback.getLocation() == null) pullback.setLocation(existing.getLocation());
+                if (pullback.getPrinterModel() == null) pullback.setPrinterModel(existing.getPrinterModel());
+                if (pullback.getEmptyCartridge() == null) pullback.setEmptyCartridge(existing.getEmptyCartridge());
+                if (pullback.getUnusedCartridge() == null) pullback.setUnusedCartridge(existing.getUnusedCartridge());
+                if (pullback.getReplacementPrinterDetailsId() == null) pullback.setReplacementPrinterDetailsId(existing.getReplacementPrinterDetailsId());
+            }
             pullback.setId(existingId);
             pullbackDAO.updatePullback(pullback);
             responseJson.addProperty("status", "SUCCESS");
@@ -236,10 +248,7 @@ public class PullbackServlet extends HttpServlet {
 
         switch (action) {
             case "markReceived":
-                final String receivedBy = request.getParameter("receivedBy");
-                final String comments = request.getParameter("comments");
-                success = pullbackDAO.updateStatus(pullbackId, 1,
-                        receivedBy != null ? receivedBy : "LOGISTICS", comments);
+                success = pullbackDAO.updateStatusOnly(pullbackId, 4);
                 setActionResponse(responseJson, success, "Printer marked as received");
                 break;
 
@@ -249,6 +258,11 @@ public class PullbackServlet extends HttpServlet {
                     responseJson.addProperty("status", "SUCCESS");
                     responseJson.addProperty("message", "Verification saved successfully");
                 }
+                break;
+
+            case "receivedByInventory":
+                success = pullbackDAO.updateStatusOnly(pullbackId, 5);
+                setActionResponse(responseJson, success, "Marked as received by inventory");
                 break;
 
             case "triggerCreditNote":
@@ -391,6 +405,7 @@ public class PullbackServlet extends HttpServlet {
         json.addProperty("pSerialNo", p.getSerialNo());
         json.addProperty("pickedBy", p.getPickedBy());
         json.addProperty("status", p.getStatus());
+        json.addProperty("uiStatus", p.getUiStatus());
         json.addProperty("courierId", p.getCourierId());
         json.addProperty("courierName", p.getCourierName());
         json.addProperty("consignmentNo", p.getConsignmentNo());

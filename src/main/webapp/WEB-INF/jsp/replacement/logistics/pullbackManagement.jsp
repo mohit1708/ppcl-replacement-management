@@ -731,10 +731,35 @@
         function destroyTables() {
             Object.keys(dataTables).forEach(function(key) {
                 if (dataTables[key]) {
-                    dataTables[key].destroy();
+                    dataTables[key].destroy(true);
                 }
             });
             dataTables = {};
+
+            // Re-create empty table bodies after destroy(true) removes them
+            var tables = {
+                '#pullbackTableAll': '#pullback-all .table-responsive',
+                '#pullbackTablePending': '#pullback-pending .table-responsive',
+                '#pullbackTableReceived': '#pullback-received .table-responsive',
+                '#pullbackTableVerified': '#pullback-verified .table-responsive',
+                '#pullbackTableDamaged': '#pullback-damaged .table-responsive'
+            };
+            var headers = '<thead class="thead-light"><tr>' +
+                '<th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th>' +
+                '<th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr></thead>';
+            var bodyIds = {
+                '#pullbackTableAll': 'pullbackTableBodyAll',
+                '#pullbackTablePending': 'pullbackTableBodyPending',
+                '#pullbackTableReceived': 'pullbackTableBodyReceived',
+                '#pullbackTableVerified': 'pullbackTableBodyVerified',
+                '#pullbackTableDamaged': 'pullbackTableBodyDamaged'
+            };
+            Object.keys(tables).forEach(function(tableId) {
+                var container = $(tables[tableId]);
+                container.empty();
+                container.append('<table class="table table-hover table-bordered" id="' + tableId.substring(1) + '">' +
+                    headers + '<tbody id="' + bodyIds[tableId] + '"></tbody></table>');
+            });
         }
 
         function getPickedByBadge(pickedBy) {
@@ -769,7 +794,7 @@
         }
 
         function resolvePickupStatus(item) {
-            var statusName = ((item.statusName || '') + '').trim().toLowerCase();
+            var statusName = ((item.uiStatus || item.statusName || '') + '').trim().toLowerCase();
             if (statusName === 'to be picked') {
                 return { key: 'to_be_picked', label: 'To Be Picked' };
             }
@@ -790,6 +815,18 @@
             }
             if (statusName === 'qc done') {
                 return { key: 'qc_done', label: 'QC Done' };
+            }
+            if (statusName === 'to_be_picked') {
+                return { key: 'to_be_picked', label: 'To Be Picked' };
+            }
+            if (statusName === 'to_be_dispatched') {
+                return { key: 'to_be_dispatched', label: 'To Be Dispatched' };
+            }
+            if (statusName === 'in_transit') {
+                return { key: 'in_transit', label: 'In transit' };
+            }
+            if (statusName === 'pending_submission_to_inventory') {
+                return { key: 'pending_inventory', label: 'Pending Submission To Inventory' };
             }
 
             // Backward-compatible fallback for old numeric status values.
@@ -837,22 +874,28 @@
             var buttons = '<div class="action-buttons">';
             var statusKey = getStatusKey(item);
             
-                buttons += '<button class="btn btn-outline-primary btn-action" title="View Cartridges" onclick="viewCartridges(' + 
-                       item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' + 
-                       (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
-                       '<i class="fas fa-boxes mr-1"></i>Cartridges</button>';
-
-            if (statusKey === 'to_be_picked' || statusKey === 'to_be_dispatched' || statusKey === 'in_transit') {
+                if (statusKey === 'in_transit') {
                 buttons += '<button class="btn btn-outline-success btn-action" title="Mark Received" onclick="markReceived(' + 
                            item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
                            '<i class="fas fa-check mr-1"></i>Recv</button>';
             }
+
+            buttons += '<button class="btn btn-outline-info btn-action" title="Received By Inventory" onclick="receivedByInventory(' +
+                       item.id + ')">' +
+                       '<i class="fas fa-warehouse mr-1"></i>Recv by Inv</button>';
 
             if (statusKey === 'received' || statusKey === 'qc_pending') {
                 buttons += '<button class="btn btn-outline-warning btn-action" title="Verify Cartridge" onclick="verifyCartridge(' + 
                            item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' + 
                            (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
                            '<i class="fas fa-clipboard-check mr-1"></i>Verify</button>';
+            }
+
+            if (statusKey === 'pending_inventory') {
+                buttons += '<button class="btn btn-outline-warning btn-action" title="Update QC" onclick="verifyCartridge(' +
+                           item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\', ' +
+                           (item.emptyCartridge || 0) + ', ' + (item.unusedCartridge || 0) + ')">' +
+                           '<i class="fas fa-clipboard-check mr-1"></i>Update QC</button>';
             }
 
             if (statusKey !== 'to_be_picked' && statusKey !== 'to_be_dispatched' && statusKey !== 'in_transit') {
@@ -899,6 +942,28 @@
             $('#receivedModal').modal('show');
         }
 
+        function receivedByInventory(id) {
+            if (!confirm('Are you sure you want to mark this as received by inventory?')) {
+                return;
+            }
+            $.ajax({
+                url: contextPath + '/api/pullback/action',
+                type: 'POST',
+                data: { action: 'receivedByInventory', pullbackId: id },
+                success: function(response) {
+                    if (response.status === 'SUCCESS') {
+                        showAlert('success', response.message);
+                        loadPullbackData();
+                    } else {
+                        showAlert('danger', response.message || 'Operation failed');
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error processing request');
+                }
+            });
+        }
+
         function verifyCartridge(id, reqId, serialNo, empty, unused) {
             $('#verifyPullbackId').val(id);
             $('#verReqId').text('#' + reqId);
@@ -925,7 +990,15 @@
 
         $('#receivedForm').on('submit', function(e) {
             e.preventDefault();
-            submitAction($(this), 'Printer marked as received');
+            var form = $(this);
+            $('#receivedModal').modal('hide');
+            setTimeout(function() {
+                if (!confirm('Are you sure you want to mark this printer as received?')) {
+                    $('#receivedModal').modal('show');
+                    return;
+                }
+                submitAction(form, 'Printer marked as received');
+            }, 300);
         });
 
         $('#verifyForm').on('submit', function(e) {

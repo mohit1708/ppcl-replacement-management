@@ -12,6 +12,7 @@ public class PrinterPullback {
     private String serialNo;
     private String pickedBy;
     private Integer status;
+    private String uiStatus;
     private Integer courierId;
     private String courierName;
     private String consignmentNo;
@@ -110,6 +111,14 @@ public class PrinterPullback {
 
     public void setStatus(final Integer status) {
         this.status = status;
+    }
+
+    public String getUiStatus() {
+        return uiStatus;
+    }
+
+    public void setUiStatus(String uiStatus) {
+        this.uiStatus = uiStatus;
     }
 
     public Integer getCourierId() {
