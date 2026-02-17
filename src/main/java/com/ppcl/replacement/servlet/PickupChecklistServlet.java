@@ -70,17 +70,6 @@ public class PickupChecklistServlet extends HttpServlet {
                         continue;
                     }
 
-                    // Validate checklist - all items must be present for success
-                    if (!printer || !powerCable || !lanCable || !tray) {
-                        // Update with mismatch status (do not change status to 2)
-                        updatePullbackChecklist(conn, replacementRequestId, printerSerialNo,
-                                printer, powerCable, lanCable, tray, emptyCartridges, unusedCartridge, false);
-                        detail.addProperty("message", "PICKUP_MISMATCH");
-                        allSuccess = false;
-                        detailsArray.add(detail);
-                        continue;
-                    }
-
                     // Update checklist and set status to 2 on success
                     final boolean updated = updatePullbackChecklist(conn, replacementRequestId, printerSerialNo,
                             printer, powerCable, lanCable, tray, emptyCartridges, unusedCartridge, true);
