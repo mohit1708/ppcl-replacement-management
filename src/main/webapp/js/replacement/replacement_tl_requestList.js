@@ -258,39 +258,37 @@ function approveAndForward() {
     
     if (hasError) return;
     
-    if (!confirm('Save recommendations and forward to AM Manager for commercial review?')) {
-        return;
-    }
-    
-    // Save each printer recommendation
-    var savePromises = printerUpdates.map(function(p) {
-        return $.post(contextPath + '/views/replacement/tl/updateRecommendation', {
-            printerId: p.printerId,
-            reqId: reqId,
-            newModelId: p.newModelId,
-            comments: p.comments
+    showAppConfirm('Save recommendations and forward to AM Manager for commercial review?', function() {
+        // Save each printer recommendation
+        var savePromises = printerUpdates.map(function(p) {
+            return $.post(contextPath + '/views/replacement/tl/updateRecommendation', {
+                printerId: p.printerId,
+                reqId: reqId,
+                newModelId: p.newModelId,
+                comments: p.comments
+            });
         });
-    });
-    
-    // Wait for all updates, then approve
-    $.when.apply($, savePromises).done(function() {
-        var actionComments = $('#actionComments').val();
         
-        $.post(contextPath + '/views/replacement/tl/action', {
-            reqId: reqId,
-            actionType: 'APPROVE',
-            comments: actionComments
-        }, function(resp) {
-            if (resp.success) {
-                showAppAlert('Recommendations saved and ' + resp.message, 'success');
-                $('#actionModal').modal('hide');
-                setTimeout(function() { location.reload(); }, 10000);
-            } else {
-                showAppAlert((resp.message || 'Failed'), 'danger');
-            }
-        }, 'json');
-    }).fail(function() {
-        showAppAlert('Failed to save recommendations', 'danger');
+        // Wait for all updates, then approve
+        $.when.apply($, savePromises).done(function() {
+            var actionComments = $('#actionComments').val();
+            
+            $.post(contextPath + '/views/replacement/tl/action', {
+                reqId: reqId,
+                actionType: 'APPROVE',
+                comments: actionComments
+            }, function(resp) {
+                if (resp.success) {
+                    showAppAlert('Recommendations saved and ' + resp.message, 'success');
+                    $('#actionModal').modal('hide');
+                    setTimeout(function() { location.reload(); }, 10000);
+                } else {
+                    showAppAlert((resp.message || 'Failed'), 'danger');
+                }
+            }, 'json');
+        }).fail(function() {
+            showAppAlert('Failed to save recommendations', 'danger');
+        });
     });
 }
 
