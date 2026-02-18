@@ -122,7 +122,7 @@ public class PrinterPullbackDAO extends BaseDAO {
         final List<PrinterPullback> list = new ArrayList<>();
         final StringBuilder sql = new StringBuilder("""
                 SELECT p.ID, p.REPLACEMENT_REQ_ID, p.CALL_ID, p.CLIENT_DOT_ID, p.LOCATION,
-                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS, p.COURIER_ID,
+                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS AS STATUS_CODE, p.STATUS, p.COURIER_ID,
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
@@ -226,7 +226,7 @@ public class PrinterPullbackDAO extends BaseDAO {
         final List<PrinterPullback> list = new ArrayList<>();
         final String sql = """
                 SELECT p.ID, p.REPLACEMENT_REQ_ID, p.CALL_ID, p.CLIENT_DOT_ID, p.LOCATION,
-                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS, p.COURIER_ID,
+                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS AS STATUS_CODE, p.STATUS, p.COURIER_ID,
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
@@ -267,7 +267,7 @@ public class PrinterPullbackDAO extends BaseDAO {
     public PrinterPullback getPullbackById(final int id) throws SQLException {
         final String sql = """
                 SELECT p.ID, p.REPLACEMENT_REQ_ID, p.CALL_ID, p.CLIENT_DOT_ID, p.LOCATION,
-                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS, p.COURIER_ID,
+                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS AS STATUS_CODE, p.STATUS, p.COURIER_ID,
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
@@ -313,7 +313,7 @@ public class PrinterPullbackDAO extends BaseDAO {
     public PrinterPullback getPullbackByIdForUpdate(final int id) throws SQLException {
         final String sql = """
                 SELECT p.ID, p.REPLACEMENT_REQ_ID, p.CALL_ID, p.CLIENT_DOT_ID, p.LOCATION,
-                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS, p.COURIER_ID,
+                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS AS STATUS_CODE, p.STATUS, p.COURIER_ID,
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
@@ -418,7 +418,7 @@ public class PrinterPullbackDAO extends BaseDAO {
         final List<PrinterPullback> list = new ArrayList<>();
         final StringBuilder sql = new StringBuilder("""
                 SELECT p.ID, p.REPLACEMENT_REQ_ID, p.CALL_ID, p.CLIENT_DOT_ID, p.LOCATION,
-                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, tpm.DESCRIPTION as STATUS, p.COURIER_ID,
+                       p.P_MODEL, p.P_SERIAL_NO, p.PICKED_BY, p.STATUS AS STATUS_CODE, tpm.DESCRIPTION as STATUS, p.COURIER_ID,
                        p.COURIER_NAME, p.CONSIGNMENT_NO, p.DISPATCH_DATE, p.ARRIVAL_DATE,
                        p.RECEIPT, p.DESTINATION_BRANCH, p.TRANSPORT_MODE, p.CONTACT_PERSON,
                        p.CONTACT_NUMBER, p.COMMENTS, p.PRINTER, p.POWER_CABLE, p.LAN_CABLE,
@@ -568,6 +568,10 @@ public class PrinterPullbackDAO extends BaseDAO {
 
     public int getStatusCode(final String status) {
         if (status == null) return 0;
+        try {
+            return Integer.parseInt(status.trim());
+        } catch (final NumberFormatException ignored) {
+        }
         return switch (status.toUpperCase()) {
             case "RECEIVED" -> 1;
             case "VERIFIED" -> 2;
@@ -775,7 +779,8 @@ public class PrinterPullbackDAO extends BaseDAO {
         p.setPrinterModel(rs.getObject("P_MODEL") != null ? rs.getInt("P_MODEL") : null);
         p.setSerialNo(rs.getString("P_SERIAL_NO"));
         p.setPickedBy(rs.getString("PICKED_BY"));
-        p.setUiStatus(rs.getObject("STATUS") != null ? rs.getString("STATUS") : null);
+        p.setStatus(rs.getObject("STATUS_CODE") != null ? rs.getInt("STATUS_CODE") : null);
+        p.setUiStatus(rs.getString("STATUS"));
         p.setCourierId(rs.getObject("COURIER_ID") != null ? rs.getInt("COURIER_ID") : null);
         p.setCourierName(rs.getString("COURIER_NAME"));
         p.setConsignmentNo(rs.getString("CONSIGNMENT_NO"));

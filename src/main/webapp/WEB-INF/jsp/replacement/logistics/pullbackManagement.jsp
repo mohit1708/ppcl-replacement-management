@@ -88,10 +88,12 @@
                         </label>
                         <select class="form-control form-control-sm" name="status" id="filterStatus">
                             <option value="">All Statuses</option>
-                            <option value="PENDING" ${param.status == 'PENDING' ? 'selected' : ''}>Pending</option>
-                            <option value="RECEIVED" ${param.status == 'RECEIVED' ? 'selected' : ''}>Received</option>
-                            <option value="VERIFIED" ${param.status == 'VERIFIED' ? 'selected' : ''}>Verified</option>
-                            <option value="DAMAGED" ${param.status == 'DAMAGED' ? 'selected' : ''}>Damaged</option>
+                            <option value="1" ${param.status == '1' ? 'selected' : ''}>To Be Picked</option>
+                            <option value="2" ${param.status == '2' ? 'selected' : ''}>To Be Dispatched</option>
+                            <option value="3" ${param.status == '3' ? 'selected' : ''}>In Transit</option>
+                            <option value="4" ${param.status == '4' ? 'selected' : ''}>Pending Submission To Inventory</option>
+                            <option value="5" ${param.status == '5' ? 'selected' : ''}>QC Pending</option>
+                            <option value="6" ${param.status == '6' ? 'selected' : ''}>QC Done</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -142,32 +144,44 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="pullback-pending-tab" data-toggle="tab" href="#pullback-pending" role="tab">
-                        <i class="fas fa-hourglass-half text-warning"></i> Pending
-                        <span class="badge badge-warning ml-1" id="pullbackPendingCount">0</span>
+                    <a class="nav-link" data-toggle="tab" href="#pullback-tobepicked" role="tab">
+                        <i class="fas fa-hand-paper text-secondary"></i> To Be Picked
+                        <span class="badge badge-secondary ml-1" id="pullbackToBePickedCount">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="pullback-received-tab" data-toggle="tab" href="#pullback-received" role="tab">
-                        <i class="fas fa-check-circle text-success"></i> Received
-                        <span class="badge badge-success ml-1" id="pullbackReceivedCount">0</span>
+                    <a class="nav-link" data-toggle="tab" href="#pullback-tobedispatched" role="tab">
+                        <i class="fas fa-truck text-warning"></i> To Be Dispatched
+                        <span class="badge badge-warning ml-1" id="pullbackToBeDispatchedCount">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="pullback-verified-tab" data-toggle="tab" href="#pullback-verified" role="tab">
-                        <i class="fas fa-clipboard-check text-info"></i> Verified
-                        <span class="badge badge-info ml-1" id="pullbackVerifiedCount">0</span>
+                    <a class="nav-link" data-toggle="tab" href="#pullback-intransit" role="tab">
+                        <i class="fas fa-shipping-fast text-info"></i> In Transit
+                        <span class="badge badge-info ml-1" id="pullbackInTransitCount">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="pullback-damaged-tab" data-toggle="tab" href="#pullback-damaged" role="tab">
-                        <i class="fas fa-exclamation-triangle text-danger"></i> Damaged
-                        <span class="badge badge-danger ml-1" id="pullbackDamagedCount">0</span>
+                    <a class="nav-link" data-toggle="tab" href="#pullback-pendinginventory" role="tab">
+                        <i class="fas fa-warehouse text-danger"></i> Pending Submission To Inventory
+                        <span class="badge badge-danger ml-1" id="pullbackPendingInventoryCount">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#pullback-qcpending" role="tab">
+                        <i class="fas fa-clipboard-check text-primary"></i> QC Pending
+                        <span class="badge badge-primary ml-1" id="pullbackQcPendingCount">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#pullback-qcdone" role="tab">
+                        <i class="fas fa-check-circle text-success"></i> QC Done
+                        <span class="badge badge-success ml-1" id="pullbackQcDoneCount">0</span>
                     </a>
                 </li>
             </ul>
 
-            <div class="tab-content">
+            <div class="tab-content" id="pullbackTabContent">
                 <div class="tab-pane fade show active" id="pullback-all" role="tabpanel">
                     <div class="table-responsive">
                         <table class="table table-hover table-bordered" id="pullbackTableAll">
@@ -186,75 +200,63 @@
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="pullback-pending" role="tabpanel">
+                <div class="tab-pane fade" id="pullback-tobepicked" role="tabpanel">
                     <div class="table-responsive">
-                        <table class="table table-hover table-bordered" id="pullbackTablePending">
+                        <table class="table table-hover table-bordered" id="pullbackTableToBePicked">
                             <thead class="thead-light">
-                                <tr>
-                                    <th>Request ID</th>
-                                    <th>Client</th>
-                                    <th>Serial</th>
-                                    <th>Model</th>
-                                    <th>Pickup By</th>
-                                    <th>Pickup Status</th>
-                                    <th>Actions</th>
-                                </tr>
+                                <tr><th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th><th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr>
                             </thead>
-                            <tbody id="pullbackTableBodyPending"></tbody>
+                            <tbody id="pullbackTableBodyToBePicked"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="pullback-received" role="tabpanel">
+                <div class="tab-pane fade" id="pullback-tobedispatched" role="tabpanel">
                     <div class="table-responsive">
-                        <table class="table table-hover table-bordered" id="pullbackTableReceived">
+                        <table class="table table-hover table-bordered" id="pullbackTableToBeDispatched">
                             <thead class="thead-light">
-                                <tr>
-                                    <th>Request ID</th>
-                                    <th>Client</th>
-                                    <th>Serial</th>
-                                    <th>Model</th>
-                                    <th>Pickup By</th>
-                                    <th>Pickup Status</th>
-                                    <th>Actions</th>
-                                </tr>
+                                <tr><th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th><th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr>
                             </thead>
-                            <tbody id="pullbackTableBodyReceived"></tbody>
+                            <tbody id="pullbackTableBodyToBeDispatched"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="pullback-verified" role="tabpanel">
+                <div class="tab-pane fade" id="pullback-intransit" role="tabpanel">
                     <div class="table-responsive">
-                        <table class="table table-hover table-bordered" id="pullbackTableVerified">
+                        <table class="table table-hover table-bordered" id="pullbackTableInTransit">
                             <thead class="thead-light">
-                                <tr>
-                                    <th>Request ID</th>
-                                    <th>Client</th>
-                                    <th>Serial</th>
-                                    <th>Model</th>
-                                    <th>Pickup By</th>
-                                    <th>Pickup Status</th>
-                                    <th>Actions</th>
-                                </tr>
+                                <tr><th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th><th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr>
                             </thead>
-                            <tbody id="pullbackTableBodyVerified"></tbody>
+                            <tbody id="pullbackTableBodyInTransit"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="pullback-damaged" role="tabpanel">
+                <div class="tab-pane fade" id="pullback-pendinginventory" role="tabpanel">
                     <div class="table-responsive">
-                        <table class="table table-hover table-bordered" id="pullbackTableDamaged">
+                        <table class="table table-hover table-bordered" id="pullbackTablePendingInventory">
                             <thead class="thead-light">
-                                <tr>
-                                    <th>Request ID</th>
-                                    <th>Client</th>
-                                    <th>Serial</th>
-                                    <th>Model</th>
-                                    <th>Pickup By</th>
-                                    <th>Pickup Status</th>
-                                    <th>Actions</th>
-                                </tr>
+                                <tr><th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th><th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr>
                             </thead>
-                            <tbody id="pullbackTableBodyDamaged"></tbody>
+                            <tbody id="pullbackTableBodyPendingInventory"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="pullback-qcpending" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered" id="pullbackTableQcPending">
+                            <thead class="thead-light">
+                                <tr><th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th><th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="pullbackTableBodyQcPending"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="pullback-qcdone" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered" id="pullbackTableQcDone">
+                            <thead class="thead-light">
+                                <tr><th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th><th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="pullbackTableBodyQcDone"></tbody>
                         </table>
                     </div>
                 </div>
@@ -270,7 +272,73 @@
 
 <%@ include file="../common/footer.jsp" %>
 
-<!-- View Cartridges Modal -->
+<!-- Pickup Checklist Modal -->
+    <div class="modal fade" id="pickupChecklistModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-clipboard-list mr-2"></i>Pickup Checklist</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                </div>
+                <form id="pickupChecklistForm">
+                    <input type="hidden" id="pickupReqId">
+                    <input type="hidden" id="pickupSerialNo">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Replacement ID:</strong> <span id="pickupReqIdDisplay">-</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Serial No:</strong> <span id="pickupSerialNoDisplay">-</span>
+                            </div>
+                        </div>
+                        <h6 class="border-bottom pb-2 mb-3">Items Checklist</h6>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="pickupPowerCable">
+                                <label class="custom-control-label" for="pickupPowerCable">Power Cable</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="pickupPrinter">
+                                <label class="custom-control-label" for="pickupPrinter">Printer</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="pickupLanCable">
+                                <label class="custom-control-label" for="pickupLanCable">LAN Cable</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="pickupTray">
+                                <label class="custom-control-label" for="pickupTray">Tray</label>
+                            </div>
+                        </div>
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Cartridge Details</h6>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Empty Cartridges</label>
+                            <input type="number" class="form-control" id="pickupEmptyCartridges" min="0" placeholder="Enter count" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Unused Cartridges</label>
+                            <input type="number" class="form-control" id="pickupUnusedCartridge" min="0" placeholder="Enter count" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane mr-1"></i> Submit Checklist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Cartridges Modal -->
     <div class="modal fade" id="cartridgesModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-md">
             <div class="modal-content">
@@ -458,6 +526,100 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save mr-1"></i> Save Verification
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Dispatch Form Modal -->
+    <div class="modal fade" id="vendorDispatchModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-truck mr-2"></i>Dispatch Details</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <form id="vendorDispatchForm">
+                    <input type="hidden" id="vdReqId">
+                    <input type="hidden" id="vdSerialNo">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Replacement ID:</strong> <span id="vdReqIdDisplay">-</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Serial No:</strong> <span id="vdSerialNoDisplay">-</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Dispatch Mode <span class="text-danger">*</span></label>
+                            <select class="form-control" id="vdMode" required>
+                                <option value="COURIER">Courier</option>
+                                <option value="TRANSPORT">Transport</option>
+                            </select>
+                        </div>
+                        <div id="vdCourierSection">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Courier Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="vdCourierName" placeholder="e.g. BlueDart">
+                            </div>
+                            <div class="form-group">
+                                <label class="font-weight-bold">Consignment No <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="vdConsignmentNo" placeholder="e.g. BD123456">
+                            </div>
+                            <div class="form-group">
+                                <label class="font-weight-bold">Destination Branch <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="vdDestinationBranch" placeholder="e.g. MUMBAI">
+                            </div>
+                        </div>
+                        <div id="vdTransportSection" style="display: none;">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Transport Type <span class="text-danger">*</span></label>
+                                <select class="form-control" id="vdTransportMode">
+                                    <option value="">Select transport</option>
+                                    <option value="BUS">Bus</option>
+                                    <option value="TRAIN">Train</option>
+                                    <option value="TRANSPORT">Transport</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="font-weight-bold">Contact Person <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="vdContactPerson" placeholder="e.g. Ramesh">
+                            </div>
+                            <div class="form-group">
+                                <label class="font-weight-bold">Contact Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="vdContactNumber" placeholder="e.g. 9876543210">
+                            </div>
+                            <div class="form-group">
+                                <label class="font-weight-bold">Comments <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="vdComments" rows="2" placeholder="Transport details"></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Dispatch Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="vdDispatchDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Expected Arrival Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="vdArrivalDate" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Receipt <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="vdReceipt" accept=".pdf,image/*" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-paper-plane mr-1"></i> Submit Dispatch
                         </button>
                     </div>
                 </form>
@@ -742,43 +904,45 @@
         var pullbackDataMap = {};
         var dataTables = {};
 
+        var statusTabs = [
+            { key: 'to_be_picked',      label: 'To Be Picked',                    bodyId: 'pullbackTableBodyToBePicked',       tableId: 'pullbackTableToBePicked',       countId: 'pullbackToBePickedCount' },
+            { key: 'to_be_dispatched',   label: 'To Be Dispatched',                bodyId: 'pullbackTableBodyToBeDispatched',   tableId: 'pullbackTableToBeDispatched',   countId: 'pullbackToBeDispatchedCount' },
+            { key: 'in_transit',         label: 'In transit',                       bodyId: 'pullbackTableBodyInTransit',        tableId: 'pullbackTableInTransit',        countId: 'pullbackInTransitCount' },
+            { key: 'pending_inventory',  label: 'Pending Submission To Inventory',  bodyId: 'pullbackTableBodyPendingInventory', tableId: 'pullbackTablePendingInventory', countId: 'pullbackPendingInventoryCount' },
+            { key: 'qc_pending',         label: 'QC Pending',                       bodyId: 'pullbackTableBodyQcPending',        tableId: 'pullbackTableQcPending',        countId: 'pullbackQcPendingCount' },
+            { key: 'qc_done',            label: 'QC Done',                          bodyId: 'pullbackTableBodyQcDone',           tableId: 'pullbackTableQcDone',           countId: 'pullbackQcDoneCount' }
+        ];
+
         function renderTable(data) {
             destroyTables();
             pullbackDataMap = {};
 
             var allRows = data || [];
-            var pendingRows = allRows.filter(function(item) {
-                return getStatusKey(item) === 'to_be_picked' || getStatusKey(item) === 'to_be_dispatched' || getStatusKey(item) === 'in_transit';
+
+            // Group rows by resolved status key
+            var grouped = {};
+            statusTabs.forEach(function(t) { grouped[t.key] = []; });
+            allRows.forEach(function(item) {
+                var key = resolvePickupStatus(item).key;
+                if (grouped[key]) grouped[key].push(item);
             });
-            var receivedRows = allRows.filter(function(item) { return getStatusKey(item) === 'received'; });
-            var verifiedRows = allRows.filter(function(item) { return getStatusKey(item) === 'qc_done'; });
-            var damagedRows = allRows.filter(function(item) { return getStatusKey(item) === 'pending_inventory'; });
 
+            // Render All table
             renderTableBody('#pullbackTableBodyAll', allRows);
-            renderTableBody('#pullbackTableBodyPending', pendingRows);
-            renderTableBody('#pullbackTableBodyReceived', receivedRows);
-            renderTableBody('#pullbackTableBodyVerified', verifiedRows);
-            renderTableBody('#pullbackTableBodyDamaged', damagedRows);
-
+            initTable('#pullbackTableAll');
             $('#recordCount').text(allRows.length + ' records');
             $('#pullbackAllCount').text(allRows.length);
-            $('#pullbackPendingCount').text(pendingRows.length);
-            $('#pullbackReceivedCount').text(receivedRows.length);
-            $('#pullbackVerifiedCount').text(verifiedRows.length);
-            $('#pullbackDamagedCount').text(damagedRows.length);
 
-            initTable('#pullbackTableAll');
-            initTable('#pullbackTablePending');
-            initTable('#pullbackTableReceived');
-            initTable('#pullbackTableVerified');
-            initTable('#pullbackTableDamaged');
+            // Render each status table
+            statusTabs.forEach(function(t) {
+                renderTableBody('#' + t.bodyId, grouped[t.key]);
+                initTable('#' + t.tableId);
+                $('#' + t.countId).text(grouped[t.key].length);
+            });
 
-            // Initial adjustment after render to keep header/body aligned.
             setTimeout(function() {
                 Object.keys(dataTables).forEach(function(key) {
-                    if (dataTables[key]) {
-                        dataTables[key].columns.adjust().draw(false);
-                    }
+                    if (dataTables[key]) dataTables[key].columns.adjust().draw(false);
                 });
             }, 0);
         }
@@ -838,29 +1002,29 @@
             });
             dataTables = {};
 
-            // Re-create empty table bodies after destroy(true) removes them
-            var tables = {
-                '#pullbackTableAll': '#pullback-all .table-responsive',
-                '#pullbackTablePending': '#pullback-pending .table-responsive',
-                '#pullbackTableReceived': '#pullback-received .table-responsive',
-                '#pullbackTableVerified': '#pullback-verified .table-responsive',
-                '#pullbackTableDamaged': '#pullback-damaged .table-responsive'
-            };
             var headers = '<thead class="thead-light"><tr>' +
                 '<th>Request ID</th><th>Client</th><th>Serial</th><th>Model</th>' +
                 '<th>Pickup By</th><th>Pickup Status</th><th>Actions</th></tr></thead>';
-            var bodyIds = {
-                '#pullbackTableAll': 'pullbackTableBodyAll',
-                '#pullbackTablePending': 'pullbackTableBodyPending',
-                '#pullbackTableReceived': 'pullbackTableBodyReceived',
-                '#pullbackTableVerified': 'pullbackTableBodyVerified',
-                '#pullbackTableDamaged': 'pullbackTableBodyDamaged'
-            };
-            Object.keys(tables).forEach(function(tableId) {
-                var container = $(tables[tableId]);
-                container.empty();
-                container.append('<table class="table table-hover table-bordered" id="' + tableId.substring(1) + '">' +
-                    headers + '<tbody id="' + bodyIds[tableId] + '"></tbody></table>');
+
+            // Re-create All table
+            var allContainer = $('#pullback-all .table-responsive');
+            allContainer.empty();
+            allContainer.append('<table class="table table-hover table-bordered" id="pullbackTableAll">' +
+                headers + '<tbody id="pullbackTableBodyAll"></tbody></table>');
+
+            // Re-create each status table
+            statusTabs.forEach(function(t) {
+                var paneId = t.tableId.replace('pullbackTable', 'pullback-').toLowerCase().replace(/\s/g, '');
+                var container = $('#' + t.tableId).closest('.table-responsive');
+                if (container.length === 0) {
+                    // fallback: find by tbody id
+                    container = $('#' + t.bodyId).closest('.table-responsive');
+                }
+                if (container.length) {
+                    container.empty();
+                    container.append('<table class="table table-hover table-bordered" id="' + t.tableId + '">' +
+                        headers + '<tbody id="' + t.bodyId + '"></tbody></table>');
+                }
             });
         }
 
@@ -974,19 +1138,34 @@
 
         function getActionButtons(item) {
             var buttons = '<div class="action-buttons">';
-            var statusKey = getStatusKey(item);
-            
-                if (statusKey === 'in_transit') {
-                buttons += '<button class="btn btn-outline-success btn-action" title="Mark Received" onclick="markReceived(' + 
-                           item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
-                           '<i class="fas fa-check mr-1"></i>Recv</button>';
+            var st = ((item.uiStatus || '') + '').trim().toLowerCase();
+
+            // To Be Picked + Vendor -> Pickup Checklist only
+            if (st === 'to be picked' && item.pickedBy === 'VENDOR') {
+                buttons += '<button class="btn btn-outline-primary btn-action" title="Pickup Checklist" onclick="showPickupChecklist(' +
+                           item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
+                           '<i class="fas fa-clipboard-list mr-1"></i>Pickup Checklist</button>';
             }
-
-            buttons += '<button class="btn btn-outline-info btn-action" title="Received By Inventory" onclick="receivedByInventory(' +
-                       item.id + ')">' +
-                       '<i class="fas fa-warehouse mr-1"></i>Recv by Inv</button>';
-
-            if (statusKey === 'pending_inventory' || statusKey === 'qc_pending' || statusKey === 'qc_done') {
+            // To Be Dispatched + Vendor -> Dispatch Details only
+            else if (st === 'to be dispatched' && item.pickedBy === 'VENDOR') {
+                buttons += '<button class="btn btn-outline-warning btn-action" title="Dispatch Details" onclick="showVendorDispatchForm(' +
+                           item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
+                           '<i class="fas fa-truck mr-1"></i>Dispatch Details</button>';
+            }
+            // In Transit -> Received only
+            else if (st === 'in transit') {
+                buttons += '<button class="btn btn-outline-success btn-action" title="Mark Received" onclick="markReceived(' +
+                           item.id + ', ' + item.replacementReqId + ', \'' + (item.pSerialNo || '') + '\')">' +
+                           '<i class="fas fa-check mr-1"></i>Received</button>';
+            }
+            // Received -> Received By Inventory only
+            else if (st === 'received') {
+                buttons += '<button class="btn btn-outline-info btn-action" title="Received By Inventory" onclick="receivedByInventory(' +
+                           item.id + ')">' +
+                           '<i class="fas fa-warehouse mr-1"></i>Recv by Inv</button>';
+            }
+            // QC Pending / QC Done / Pending Submission To Inventory -> Update QC only
+            else if (st === 'qc pending' || st === 'qc done' || st === 'pending submission to inventory') {
                 buttons += '<button class="btn btn-outline-warning btn-action" title="Update QC" onclick="showQcModal(' + item.id + ')">' +
                            '<i class="fas fa-clipboard-check mr-1"></i>Update QC</button>';
             }
@@ -1159,6 +1338,160 @@
             setTimeout(function() { $('.alert-dismissible').alert('close'); }, 5000);
         }
 
+        function showPickupChecklist(reqId, serialNo) {
+            $('#pickupReqId').val(reqId);
+            $('#pickupSerialNo').val(serialNo);
+            $('#pickupReqIdDisplay').text('REQ-' + reqId);
+            $('#pickupSerialNoDisplay').text(serialNo);
+            $('#pickupPrinter').prop('checked', false);
+            $('#pickupPowerCable').prop('checked', false);
+            $('#pickupLanCable').prop('checked', false);
+            $('#pickupTray').prop('checked', false);
+            $('#pickupEmptyCartridges').val('');
+            $('#pickupUnusedCartridge').val('');
+            $('#pickupChecklistModal').modal('show');
+        }
+
+        $('#pickupChecklistForm').on('submit', function(e) {
+            e.preventDefault();
+
+            var emptyVal = parseInt($('#pickupEmptyCartridges').val());
+            var unusedVal = parseInt($('#pickupUnusedCartridge').val());
+
+            if (isNaN(emptyVal) || emptyVal < 0) {
+                alert('Empty Cartridges must be a valid number >= 0');
+                return;
+            }
+            if (isNaN(unusedVal) || unusedVal < 0) {
+                alert('Unused Cartridges must be a valid number >= 0');
+                return;
+            }
+
+            var payload = {
+                replacementRequestId: $('#pickupReqId').val(),
+                status: [{
+                    printerSerialNo: $('#pickupSerialNo').val(),
+                    printer: $('#pickupPrinter').is(':checked'),
+                    powerCable: $('#pickupPowerCable').is(':checked'),
+                    lanCable: $('#pickupLanCable').is(':checked'),
+                    tray: $('#pickupTray').is(':checked'),
+                    emptyCartridges: emptyVal,
+                    unusedCartridge: unusedVal
+                }]
+            };
+
+            $.ajax({
+                url: contextPath + '/pickup/checklist',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(response) {
+                    $('#pickupChecklistModal').modal('hide');
+                    if (response.status === 'SUCCESS') {
+                        showAlert('success', 'Pickup checklist submitted successfully');
+                        loadPullbackData();
+                    } else {
+                        var msg = 'Checklist submission failed';
+                        if (response.details && response.details.length > 0) {
+                            msg = response.details.map(function(d) { return (d.printerSerialNo || '') + ': ' + d.message; }).join(', ');
+                        }
+                        showAlert('danger', msg);
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error submitting pickup checklist');
+                }
+            });
+        });
+
+        function showVendorDispatchForm(reqId, serialNo) {
+            $('#vdReqId').val(reqId);
+            $('#vdSerialNo').val(serialNo);
+            $('#vdReqIdDisplay').text('REQ-' + reqId);
+            $('#vdSerialNoDisplay').text(serialNo);
+            $('#vdMode').val('COURIER');
+            $('#vdCourierName').val('');
+            $('#vdConsignmentNo').val('');
+            $('#vdTransportMode').val('');
+            $('#vdContactPerson').val('');
+            $('#vdContactNumber').val('');
+            $('#vdComments').val('');
+            $('#vdDispatchDate').val('');
+            $('#vdArrivalDate').val('');
+            $('#vdReceipt').val('');
+            $('#vdDestinationBranch').val('');
+            setVendorDispatchModeUI();
+            $('#vendorDispatchModal').modal('show');
+        }
+
+        function setVendorDispatchModeUI() {
+            var mode = $('#vdMode').val();
+            var isCourier = mode === 'COURIER';
+
+            $('#vdCourierSection').toggle(isCourier);
+            $('#vdTransportSection').toggle(!isCourier);
+
+            $('#vdCourierName').prop('required', isCourier);
+            $('#vdConsignmentNo').prop('required', isCourier);
+            $('#vdDestinationBranch').prop('required', isCourier);
+
+            $('#vdTransportMode').prop('required', !isCourier);
+            $('#vdContactPerson').prop('required', !isCourier);
+            $('#vdContactNumber').prop('required', !isCourier);
+            $('#vdComments').prop('required', !isCourier);
+        }
+
+        $('#vdMode').on('change', setVendorDispatchModeUI);
+
+        $('#vendorDispatchForm').on('submit', function(e) {
+            e.preventDefault();
+
+            var receiptFile = $('#vdReceipt')[0].files[0];
+            if (!receiptFile) {
+                showAlert('danger', 'Receipt file is required');
+                return;
+            }
+
+            var mode = $('#vdMode').val();
+            var payload = new FormData();
+            payload.append('replacementReqId', parseInt($('#vdReqId').val()));
+            payload.append('pSerialNo', $('#vdSerialNo').val());
+            payload.append('pullbackMode', mode);
+            payload.append('dispatchDate', $('#vdDispatchDate').val());
+            payload.append('arrivalDate', $('#vdArrivalDate').val());
+            payload.append('receipt', receiptFile);
+            if (mode === 'COURIER') {
+                payload.append('courierName', $('#vdCourierName').val());
+                payload.append('consignmentNo', $('#vdConsignmentNo').val());
+                payload.append('destinationBranch', $('#vdDestinationBranch').val());
+            } else {
+                payload.append('transportMode', $('#vdTransportMode').val());
+                payload.append('contactPerson', $('#vdContactPerson').val());
+                payload.append('contactNumber', $('#vdContactNumber').val());
+                payload.append('comments', $('#vdComments').val());
+            }
+
+            $.ajax({
+                url: contextPath + '/api/pullback',
+                type: 'POST',
+                processData: false,
+                contentType: false,
+                data: payload,
+                success: function(response) {
+                    $('#vendorDispatchModal').modal('hide');
+                    if (response.status === 'SUCCESS') {
+                        showAlert('success', 'Dispatch details submitted successfully');
+                        loadPullbackData();
+                    } else {
+                        showAlert('danger', response.message || 'Dispatch submission failed');
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error submitting dispatch details');
+                }
+            });
+        });
+
         function clearFilters() {
             window.location.href = window.location.pathname;
         }
@@ -1221,29 +1554,18 @@
         max-width: 100%;
     }
 
-    #pullbackTableAll,
-    #pullbackTablePending,
-    #pullbackTableReceived,
-    #pullbackTableVerified,
-    #pullbackTableDamaged {
+    #pullbackTabContent .table {
         width: 100% !important;
         table-layout: fixed;
     }
 
-    #pullbackTableAll td, #pullbackTableAll th,
-    #pullbackTablePending td, #pullbackTablePending th,
-    #pullbackTableReceived td, #pullbackTableReceived th,
-    #pullbackTableVerified td, #pullbackTableVerified th,
-    #pullbackTableDamaged td, #pullbackTableDamaged th {
+    #pullbackTabContent .table td,
+    #pullbackTabContent .table th {
         vertical-align: middle;
         word-break: break-word;
     }
 
-    #pullbackTableAll td:last-child,
-    #pullbackTablePending td:last-child,
-    #pullbackTableReceived td:last-child,
-    #pullbackTableVerified td:last-child,
-    #pullbackTableDamaged td:last-child {
+    #pullbackTabContent .table td:last-child {
         overflow: visible;
     }
 

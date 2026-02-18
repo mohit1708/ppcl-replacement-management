@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ppcl.replacement.dao.PrinterPullbackDAO;
 import com.ppcl.replacement.model.PrinterPullback;
+import com.ppcl.replacement.util.FileUploadUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,10 +22,12 @@ import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 @WebServlet(urlPatterns = {"/api/pullback", "/api/pullback/list", "/api/pullback/action"})
 public class PullbackServlet extends HttpServlet {
 
+    private static final String RECEIPT_UPLOAD_DIR_PARAM = "pullback.receipt.dir";
     private final Gson gson = new Gson();
     private final PrinterPullbackDAO pullbackDAO = new PrinterPullbackDAO();
 
@@ -146,10 +150,11 @@ public class PullbackServlet extends HttpServlet {
 
     // POST /api/pullback - Create or Update
     private void handleCreateOrUpdate(final HttpServletRequest request, final JsonObject responseJson) throws Exception {
-        final JsonObject body = readJsonBody(request);
+        final boolean multipart = isMultipartRequest(request);
+        final JsonObject body = multipart ? new JsonObject() : readJsonBody(request);
 
-        final int replacementReqId = getIntOrDefault(body, "replacementReqId", 0);
-        final String pSerialNo = getStringOrNull(body, "pSerialNo");
+        final int replacementReqId = getIntField(request, body, multipart, "replacementReqId", 0);
+        final String pSerialNo = getStringField(request, body, multipart, "pSerialNo");
 
         if (replacementReqId == 0) {
             responseJson.addProperty("status", "FAILURE");
@@ -169,11 +174,15 @@ public class PullbackServlet extends HttpServlet {
             return;
         }
 
-        final String pullbackMode = getStringOrNull(body, "pullbackMode");
+        final String pullbackMode = getStringField(request, body, multipart, "pullbackMode");
+        final String uploadedReceiptPath = multipart ? uploadReceiptIfPresent(request) : null;
+        final String effectiveReceipt = uploadedReceiptPath != null
+                ? uploadedReceiptPath
+                : getStringField(request, body, multipart, "receipt");
 
         // Validate COURIER mode fields
         if ("COURIER".equalsIgnoreCase(pullbackMode)) {
-            final String missing = validateCourierFields(body);
+            final String missing = validateCourierFields(request, body, multipart, effectiveReceipt);
             if (missing != null) {
                 responseJson.addProperty("status", "FAILURE");
                 responseJson.addProperty("message", "When pullbackMode is COURIER, the following fields are mandatory: " + missing);
@@ -183,7 +192,7 @@ public class PullbackServlet extends HttpServlet {
 
         // Validate TRANSPORT mode fields
         if ("TRANSPORT".equalsIgnoreCase(pullbackMode)) {
-            final String transportMode = getStringOrNull(body, "transportMode");
+            final String transportMode = getStringField(request, body, multipart, "transportMode");
             if (transportMode != null && !transportMode.isEmpty() &&
                     !transportMode.equalsIgnoreCase("BUS") &&
                     !transportMode.equalsIgnoreCase("TRAIN") &&
@@ -192,7 +201,7 @@ public class PullbackServlet extends HttpServlet {
                 responseJson.addProperty("message", "transportMode must be one of: BUS, TRAIN, TRANSPORT");
                 return;
             }
-            final String missing = validateTransportFields(body);
+            final String missing = validateTransportFields(request, body, multipart, effectiveReceipt);
             if (missing != null) {
                 responseJson.addProperty("status", "FAILURE");
                 responseJson.addProperty("message", "When pullbackMode is TRANSPORT, the following fields are mandatory: " + missing);
@@ -200,7 +209,7 @@ public class PullbackServlet extends HttpServlet {
             }
         }
 
-        final PrinterPullback pullback = mapFromJson(body);
+        final PrinterPullback pullback = multipart ? mapFromRequest(request, uploadedReceiptPath) : mapFromJson(body);
         pullback.setReplacementReqId(replacementReqId);
         pullback.setSerialNo(pSerialNo);
         pullback.setStatus(3);
@@ -218,6 +227,7 @@ public class PullbackServlet extends HttpServlet {
                 if (pullback.getEmptyCartridge() == null) pullback.setEmptyCartridge(existing.getEmptyCartridge());
                 if (pullback.getUnusedCartridge() == null) pullback.setUnusedCartridge(existing.getUnusedCartridge());
                 if (pullback.getReplacementPrinterDetailsId() == null) pullback.setReplacementPrinterDetailsId(existing.getReplacementPrinterDetailsId());
+                if (pullback.getReceipt() == null) pullback.setReceipt(existing.getReceipt());
             }
             pullback.setId(existingId);
             pullbackDAO.updatePullback(pullback);
@@ -342,31 +352,34 @@ public class PullbackServlet extends HttpServlet {
         }
     }
 
-    private String validateCourierFields(final JsonObject body) {
+    private String validateCourierFields(final HttpServletRequest request, final JsonObject body,
+                                         final boolean multipart, final String receiptValue) {
         final StringBuilder missing = new StringBuilder();
-        if (isBlank(body, "courierName")) missing.append("courierName, ");
-        if (isBlank(body, "consignmentNo")) missing.append("consignmentNo, ");
-        if (isBlank(body, "dispatchDate")) missing.append("dispatchDate, ");
-        if (isBlank(body, "arrivalDate")) missing.append("arrivalDate, ");
-        if (isBlank(body, "receipt")) missing.append("receipt, ");
-        if (isBlank(body, "destinationBranch")) missing.append("destinationBranch, ");
+        if (isBlankField(request, body, multipart, "courierName")) missing.append("courierName, ");
+        if (isBlankField(request, body, multipart, "consignmentNo")) missing.append("consignmentNo, ");
+        if (isBlankField(request, body, multipart, "dispatchDate")) missing.append("dispatchDate, ");
+        if (isBlankField(request, body, multipart, "arrivalDate")) missing.append("arrivalDate, ");
+        if (receiptValue == null || receiptValue.trim().isEmpty()) missing.append("receipt, ");
+        if (isBlankField(request, body, multipart, "destinationBranch")) missing.append("destinationBranch, ");
         return missing.length() > 0 ? missing.substring(0, missing.length() - 2) : null;
     }
 
-    private String validateTransportFields(final JsonObject body) {
+    private String validateTransportFields(final HttpServletRequest request, final JsonObject body,
+                                           final boolean multipart, final String receiptValue) {
         final StringBuilder missing = new StringBuilder();
-        if (isBlank(body, "transportMode")) missing.append("transportMode, ");
-        if (isBlank(body, "receipt")) missing.append("receipt, ");
-        if (isBlank(body, "dispatchDate")) missing.append("dispatchDate, ");
-        if (isBlank(body, "arrivalDate")) missing.append("arrivalDate, ");
-        if (isBlank(body, "contactPerson")) missing.append("contactPerson, ");
-        if (isBlank(body, "contactNumber")) missing.append("contactNumber, ");
-        if (isBlank(body, "comments")) missing.append("comments, ");
+        if (isBlankField(request, body, multipart, "transportMode")) missing.append("transportMode, ");
+        if (receiptValue == null || receiptValue.trim().isEmpty()) missing.append("receipt, ");
+        if (isBlankField(request, body, multipart, "dispatchDate")) missing.append("dispatchDate, ");
+        if (isBlankField(request, body, multipart, "arrivalDate")) missing.append("arrivalDate, ");
+        if (isBlankField(request, body, multipart, "contactPerson")) missing.append("contactPerson, ");
+        if (isBlankField(request, body, multipart, "contactNumber")) missing.append("contactNumber, ");
+        if (isBlankField(request, body, multipart, "comments")) missing.append("comments, ");
         return missing.length() > 0 ? missing.substring(0, missing.length() - 2) : null;
     }
 
-    private boolean isBlank(final JsonObject body, final String key) {
-        final String val = getStringOrNull(body, key);
+    private boolean isBlankField(final HttpServletRequest request, final JsonObject body,
+                                 final boolean multipart, final String key) {
+        final String val = getStringField(request, body, multipart, key);
         return val == null || val.trim().isEmpty();
     }
 
@@ -408,6 +421,35 @@ public class PullbackServlet extends HttpServlet {
         p.setEmptyCartridge(getIntOrNull(body, "emptyCartridge"));
         p.setUnusedCartridge(getIntOrNull(body, "unusedCartridge"));
         p.setPullbackMode(getStringOrNull(body, "pullbackMode"));
+        return p;
+    }
+
+    private PrinterPullback mapFromRequest(final HttpServletRequest request, final String uploadedReceiptPath) {
+        final PrinterPullback p = new PrinterPullback();
+        p.setCallId(parseIntOrNull(request.getParameter("callId")));
+        p.setClientDotId(parseIntOrNull(request.getParameter("clientDotId")));
+        p.setLocation(trimToNull(request.getParameter("location")));
+        p.setPrinterModel(parseIntOrNull(request.getParameter("pModel")));
+        p.setPickedBy(trimToNull(request.getParameter("pickedBy")));
+        p.setStatus(parseIntOrNull(request.getParameter("status")));
+        p.setCourierId(parseIntOrNull(request.getParameter("courierId")));
+        p.setCourierName(trimToNull(request.getParameter("courierName")));
+        p.setConsignmentNo(trimToNull(request.getParameter("consignmentNo")));
+        p.setDispatchDate(parseDateFromString(request.getParameter("dispatchDate")));
+        p.setArrivalDate(parseDateFromString(request.getParameter("arrivalDate")));
+        p.setReceipt(uploadedReceiptPath != null ? uploadedReceiptPath : trimToNull(request.getParameter("receipt")));
+        p.setDestinationBranch(trimToNull(request.getParameter("destinationBranch")));
+        p.setTransportMode(trimToNull(request.getParameter("transportMode")));
+        p.setContactPerson(trimToNull(request.getParameter("contactPerson")));
+        p.setContactNumber(trimToNull(request.getParameter("contactNumber")));
+        p.setComments(trimToNull(request.getParameter("comments")));
+        p.setPrinter(parseIntOrDefault(request.getParameter("printer"), 0));
+        p.setPowerCable(parseIntOrDefault(request.getParameter("powerCable"), 0));
+        p.setLanCable(parseIntOrDefault(request.getParameter("lanCable"), 0));
+        p.setTray(parseIntOrDefault(request.getParameter("tray"), 0));
+        p.setEmptyCartridge(parseIntOrNull(request.getParameter("emptyCartridge")));
+        p.setUnusedCartridge(parseIntOrNull(request.getParameter("unusedCartridge")));
+        p.setPullbackMode(trimToNull(request.getParameter("pullbackMode")));
         return p;
     }
 
@@ -460,6 +502,85 @@ public class PullbackServlet extends HttpServlet {
             sb.append(line);
         }
         return JsonParser.parseString(sb.toString()).getAsJsonObject();
+    }
+
+    private boolean isMultipartRequest(final HttpServletRequest request) {
+        final String contentType = request.getContentType();
+        return contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/");
+    }
+
+    private String getStringField(final HttpServletRequest request, final JsonObject body,
+                                  final boolean multipart, final String key) {
+        if (multipart) {
+            return trimToNull(request.getParameter(key));
+        }
+        return getStringOrNull(body, key);
+    }
+
+    private int getIntField(final HttpServletRequest request, final JsonObject body,
+                            final boolean multipart, final String key, final int defaultVal) {
+        if (multipart) {
+            return parseIntOrDefault(request.getParameter(key), defaultVal);
+        }
+        return getIntOrDefault(body, key, defaultVal);
+    }
+
+    private String trimToNull(final String value) {
+        if (value == null) {
+            return null;
+        }
+        final String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String uploadReceiptIfPresent(final HttpServletRequest request) throws Exception {
+        final Part receiptPart = request.getPart("receipt");
+        if (receiptPart == null || receiptPart.getSize() == 0) {
+            return null;
+        }
+
+        validateReceiptFile(receiptPart);
+        final String uploadBaseDir = trimToNull(getServletContext().getInitParameter(RECEIPT_UPLOAD_DIR_PARAM));
+        if (uploadBaseDir == null) {
+            throw new IllegalStateException("Missing web.xml context-param: " + RECEIPT_UPLOAD_DIR_PARAM);
+        }
+
+        return FileUploadUtil.uploadFile(uploadBaseDir, receiptPart, "pullback_receipt");
+    }
+
+    private void validateReceiptFile(final Part receiptPart) {
+        final String contentType = receiptPart.getContentType();
+        final String normalizedContentType = contentType != null ? contentType.toLowerCase(Locale.ROOT) : "";
+        final String submittedFileName = receiptPart.getSubmittedFileName();
+        final String extension = getFileExtension(submittedFileName);
+
+        final boolean pdfMime = "application/pdf".equals(normalizedContentType);
+        final boolean imageMime = normalizedContentType.startsWith("image/");
+        final boolean validMime = pdfMime || imageMime;
+        final boolean validExtension = ".pdf".equals(extension)
+                || ".png".equals(extension)
+                || ".jpg".equals(extension)
+                || ".jpeg".equals(extension)
+                || ".gif".equals(extension)
+                || ".bmp".equals(extension)
+                || ".webp".equals(extension)
+                || ".tif".equals(extension)
+                || ".tiff".equals(extension);
+
+        if (!validMime && !validExtension) {
+            throw new IllegalArgumentException("receipt must be a PDF or image file");
+        }
+    }
+
+    private String getFileExtension(final String fileName) {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return "";
+        }
+        final int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex < 0 || dotIndex == fileName.length() - 1) {
+            return "";
+        }
+        return fileName.substring(dotIndex).toLowerCase(Locale.ROOT);
     }
 
     private Integer getIntOrNull(final JsonObject json, final String key) {

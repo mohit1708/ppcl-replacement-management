@@ -20,7 +20,9 @@ WHERE 1=1
 
 
 SELECT * FROM REPLACEMENT_PULLBACK where P_SERIAL_NO='CNCXH3CBP8' and REPLACEMENT_REQ_ID=544
+SELECT * FROM REPLACEMENT_PULLBACK where replacement_req_id=550
 
 
+update REPLACEMENT_PULLBACK set PICKED_BY='VENDOR' where replacement_req_id=550
 
-select * from TAT_PRINTER_MASTER
+select * from TAT_PRINTER_MASTER where replacement_req_id=550
