@@ -1,7 +1,9 @@
 package com.ppcl.replacement.scheduler;
 
+import com.ppcl.replacement.model.HolidayCalendar;
 import com.ppcl.replacement.util.DBConnectionPool;
 import com.ppcl.replacement.util.DateUtil;
+import com.ppcl.replacement.util.TatCalculationService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -107,6 +109,9 @@ public class TatPercentageScheduler {
         try (final Connection con = DBConnectionPool.getConnection()) {
             con.setAutoCommit(false);
 
+            // Load holiday calendar once per run
+            final HolidayCalendar holidayCalendar = TatCalculationService.loadHolidayCalendar(con);
+
             try (final PreparedStatement selectPs = con.prepareStatement(selectSql);
                  final PreparedStatement updatePs = con.prepareStatement(updateSql);
                  final ResultSet rs = selectPs.executeQuery()) {
@@ -126,8 +131,8 @@ public class TatPercentageScheduler {
                         // Use END_AT if available (completed stage), otherwise use current time
                         final Date endTime = (endAt != null) ? endAt : new Date();
 
-                        // Calculate percentage using DateUtil
-                        double percentage = DateUtil.calculateTatPercentage(startAt, endTime, tatDuration, tatUnit);
+                        // Calculate percentage using DateUtil with holiday awareness
+                        double percentage = DateUtil.calculateTatPercentage(startAt, endTime, tatDuration, tatUnit, holidayCalendar);
 
                         // Round to 2 decimal places
                         percentage = Math.round(percentage * 100.0) / 100.0;

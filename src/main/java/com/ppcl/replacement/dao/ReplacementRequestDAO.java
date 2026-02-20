@@ -2,6 +2,7 @@ package com.ppcl.replacement.dao;
 
 import com.ppcl.replacement.model.*;
 import com.ppcl.replacement.util.DateUtil;
+import com.ppcl.replacement.util.TatCalculationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -355,6 +356,8 @@ public class ReplacementRequestDAO extends BaseDAO {
         try (final Connection con = getConnection();
              final PreparedStatement ps = con.prepareStatement(GET_MY_PENDING_REQUESTS)) {
 
+            final HolidayCalendar holidayCalendar = TatCalculationService.loadHolidayCalendar(con);
+
             ps.setInt(1, userId);
             ps.setInt(2, userId);
 
@@ -378,7 +381,7 @@ public class ReplacementRequestDAO extends BaseDAO {
                     final Integer svcCallId = rs.getInt("SERVICE_CALL_ID");
                     r.setServiceCallId(rs.wasNull() ? null : svcCallId);
 
-                    // TAT Calculation using DateUtil (working hours: Mon-Fri, 9-17)
+                    // TAT Calculation using DateUtil (working hours: Mon-Sat, 9-17, holidays excluded)
                     final int tatDuration = rs.getInt("TAT_DURATION");
                     final String tatUnit = rs.getString("TAT_DURATION_UNIT");
                     final Timestamp stageStart = rs.getTimestamp("STAGE_START");
@@ -386,14 +389,14 @@ public class ReplacementRequestDAO extends BaseDAO {
 
                     if (tatDuration > 0 && stageStart != null) {
                         final java.util.Date endTime = (stageEnd != null) ? stageEnd : new java.util.Date();
-                        final double percentage = DateUtil.calculateTatPercentage(stageStart, endTime, tatDuration, tatUnit);
+                        final double percentage = DateUtil.calculateTatPercentage(stageStart, endTime, tatDuration, tatUnit, holidayCalendar);
 
                         final String unit = (tatUnit != null) ? tatUnit : "DAYS";
                         final long tatDurationMinutes = "HOURS".equalsIgnoreCase(unit)
                                 ? tatDuration * 60L
                                 : tatDuration * 8L * 60L;
                         final long actualMinutes = DateUtil.workingMinutesBetween(
-                                stageStart, endTime, java.time.ZoneId.systemDefault());
+                                stageStart, endTime, java.time.ZoneId.systemDefault(), holidayCalendar);
 
                         r.setTatDurationMinutes(tatDurationMinutes);
                         r.setTatActualMinutes(actualMinutes);
@@ -424,6 +427,8 @@ public class ReplacementRequestDAO extends BaseDAO {
         try (final Connection con = getConnection();
              final PreparedStatement ps = con.prepareStatement(GET_REQUEST_AT_SERVICE_TL_STATUS)) {
 
+            final HolidayCalendar holidayCalendar = TatCalculationService.loadHolidayCalendar(con);
+
             try (final ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     final MyRequestRow r = new MyRequestRow();
@@ -443,38 +448,28 @@ public class ReplacementRequestDAO extends BaseDAO {
                     final Integer svcCallId = rs.getInt("SERVICE_CALL_ID");
                     r.setServiceCallId(rs.wasNull() ? null : svcCallId);
 
-                    // TAT Calculation
+                    // TAT Calculation using DateUtil (working hours: Mon-Sat, 9-17, holidays excluded)
                     final int tatDuration = rs.getInt("TAT_DURATION");
                     final String tatUnit = rs.getString("TAT_DURATION_UNIT");
                     final Timestamp stageStart = rs.getTimestamp("STAGE_START");
                     final Timestamp stageEnd = rs.getTimestamp("STAGE_END");
 
                     if (tatDuration > 0 && stageStart != null) {
-                        final long tatDurationMinutes;
-                        if ("HOURS".equalsIgnoreCase(tatUnit)) {
-                            tatDurationMinutes = tatDuration * 60L;
-                        } else {
-                            tatDurationMinutes = tatDuration * 24L * 60L;
-                        }
+                        final java.util.Date endTime = (stageEnd != null) ? stageEnd : new java.util.Date();
+                        final double percentage = DateUtil.calculateTatPercentage(stageStart, endTime, tatDuration, tatUnit, holidayCalendar);
 
-                        final long endTime = (stageEnd != null) ? stageEnd.getTime() : System.currentTimeMillis();
-                        final long actualMinutes = (endTime - stageStart.getTime()) / (1000 * 60);
-                        final double percentage = (tatDurationMinutes > 0) ? (actualMinutes * 100.0 / tatDurationMinutes) : 0;
-
-                        final String tatStatus;
-                        if (percentage >= 100) {
-                            tatStatus = "BREACH";
-                        } else if (percentage >= 80) {
-                            tatStatus = "WARNING";
-                        } else {
-                            tatStatus = "WITHIN";
-                        }
+                        final String unit = (tatUnit != null) ? tatUnit : "DAYS";
+                        final long tatDurationMinutes = "HOURS".equalsIgnoreCase(unit)
+                                ? tatDuration * 60L
+                                : tatDuration * 8L * 60L;
+                        final long actualMinutes = DateUtil.workingMinutesBetween(
+                                stageStart, endTime, java.time.ZoneId.systemDefault(), holidayCalendar);
 
                         r.setTatDurationMinutes(tatDurationMinutes);
                         r.setTatActualMinutes(actualMinutes);
                         r.setTatUnit(tatUnit);
                         r.setTatPercentage(percentage);
-                        r.setTatStatus(tatStatus);
+                        r.setTatStatus(DateUtil.getTatStatus(percentage));
                     }
 
                     list.add(r);
@@ -757,6 +752,8 @@ public class ReplacementRequestDAO extends BaseDAO {
         try (final Connection con = getConnection();
              final PreparedStatement ps = con.prepareStatement(GET_REPLACEMENT_REQUEST_USING_REQUEST_ID_PAYLOAD)) {
 
+            final HolidayCalendar holidayCalendar = TatCalculationService.loadHolidayCalendar(con);
+
             ps.setInt(1, reqId);
             ps.setInt(2, reqId);
 
@@ -795,8 +792,8 @@ public class ReplacementRequestDAO extends BaseDAO {
                         tatInfo.put("tatDuration", tatDuration);
                         tatInfo.put("tatUnit", tatUnit != null ? tatUnit : "DAYS");
 
-                        final double percentage = com.ppcl.replacement.util.DateUtil.calculateTatPercentage(
-                                stageStart, currentTime, tatDuration, tatUnit);
+                        final double percentage = DateUtil.calculateTatPercentage(
+                                stageStart, currentTime, tatDuration, tatUnit, holidayCalendar);
                         tatInfo.put("percentage", percentage);
                     }
                     result.put("tat", tatInfo);
