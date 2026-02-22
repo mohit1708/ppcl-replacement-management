@@ -1,5 +1,6 @@
 package com.ppcl.replacement.servlet;
 
+import com.ppcl.replacement.dao.MenuDAO;
 import com.ppcl.replacement.dao.UserDAO;
 import com.ppcl.replacement.model.User;
 
@@ -18,6 +19,7 @@ public class LoginServlet extends HttpServlet {
 
         try {
             final UserDAO userDAO = new UserDAO();
+            final MenuDAO menuDAO = new MenuDAO();
             User user = null;
             if (userIdParam != null) userIdParam = userIdParam.trim();
             if (userIdParam != null && !userIdParam.isEmpty() && userIdParam.matches("\\d+")) {
@@ -38,13 +40,11 @@ public class LoginServlet extends HttpServlet {
 
                 session.setAttribute("currentUser", user);
 
-                // Set role-based access flags for menu visibility
+                // DB-driven menu: load accessible menu items for this user
+                session.setAttribute("menuItems", menuDAO.getMenuItemsForUser(user.getId()));
+
+                // Page-level flags still used outside the sidebar (e.g. register.jsp)
                 session.setAttribute("isCRO", userDAO.isCRO(user.getId()));
-                session.setAttribute("isTLSupport", userDAO.isTLSupport(user.getId()));
-                session.setAttribute("isTLOrAbove", userDAO.isTLOrAbove(user.getId()));
-                session.setAttribute("isRoleForCourierLoginValid", userDAO.isRoleForCourierLoginValid(user.getId()));
-                session.setAttribute("isTLLead", userDAO.isTLLead(user.getId()));
-                session.setAttribute("isAMManager", userDAO.isAMManager(user.getId()));
                 session.setAttribute("isAccountBillingUser", userDAO.isAccountBillingUser(user.getId()));
 
                 // Redirect to dashboard

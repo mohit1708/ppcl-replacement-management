@@ -1,5 +1,6 @@
 package com.ppcl.replacement.filter;
 
+import com.ppcl.replacement.dao.MenuDAO;
 import com.ppcl.replacement.dao.UserDAO;
 import com.ppcl.replacement.model.User;
 
@@ -15,10 +16,12 @@ import java.sql.SQLException;
 public class UserBootstrapFilter implements Filter {
 
     private UserDAO userDAO;
+    private MenuDAO menuDAO;
 
     @Override
     public void init(FilterConfig filterConfig) {
         this.userDAO = new UserDAO();
+        this.menuDAO = new MenuDAO();
     }
 
     @Override
@@ -69,13 +72,12 @@ public class UserBootstrapFilter implements Filter {
         session.setAttribute("userRole", user.getRole());
         session.setAttribute("currentUser", user);
         try {
-        session.setAttribute("isCRO", userDAO.isCRO(user.getId()));
-        session.setAttribute("isTLSupport", userDAO.isTLSupport(user.getId()));
-        session.setAttribute("isRoleForCourierLoginValid", userDAO.isRoleForCourierLoginValid(user.getId()));
-        session.setAttribute("isTLOrAbove", userDAO.isTLOrAbove(user.getId()));
-        session.setAttribute("isTLLead", userDAO.isTLLead(user.getId()));
-        session.setAttribute("isAMManager", userDAO.isAMManager(user.getId()));
-        session.setAttribute("isAccountBillingUser", userDAO.isAccountBillingUser(user.getId()));
+            // DB-driven menu: load accessible menu items for this user
+            session.setAttribute("menuItems", menuDAO.getMenuItemsForUser(user.getId()));
+
+            // Page-level flags still used outside the sidebar (e.g. register.jsp)
+            session.setAttribute("isCRO", userDAO.isCRO(user.getId()));
+            session.setAttribute("isAccountBillingUser", userDAO.isAccountBillingUser(user.getId()));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
