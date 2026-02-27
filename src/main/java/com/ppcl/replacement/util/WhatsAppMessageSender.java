@@ -663,4 +663,102 @@ public class WhatsAppMessageSender {
 		return otp.toString();
 	}
 
+	/**
+	 * Sends cartridge pickup OTP via WhatsApp.
+	 * Template: "Dear Customer, we are collecting {pickupQty} unused cartridges against the confirmed {orderQty}.
+	 *            Please provide OTP {OTP} to our pickup executive for confirmation."
+	 *
+	 * @param con        JDBC connection for logging
+	 * @param mobileno   target mobile of customer (with 91 prefix)
+	 * @param templateName WhatsApp template name
+	 * @param orderqty   unused cartridges qty ordered during pullback call
+	 * @param pickupqty  pickup qty entered by pickup executive
+	 * @param otp        generated OTP for validation
+	 * @return success or error message
+	 */
+	public String sendCartPickupOTP(Connection con, String mobileno, String templateName,
+									String orderqty, String pickupqty, String otp) {
+		String message = "";
+		try {
+			String phoneNumberId = "918879112211";
+			String accessToken = "ee9a9362-c373-11f0-98fc-02c8a5e042bd";
+			String apiUrl = "https://partnersv1.pinbot.ai/v3/405353099321184/messages";
+
+			// Template otp_verification: body {{1}} = OTP, button[0] url param = OTP
+			String payload = "{"
+							+ "\"messaging_product\": \"whatsapp\","
+							+ "\"recipient_type\": \"individual\","
+							+ "\"to\": \"" + mobileno + "\","
+							+ "\"type\": \"template\","
+							+ "\"template\": {"
+							+ "	\"language\": {"
+							+ "\"code\": \"en\""
+							+ "},"
+							+ "\"name\": \"" + templateName + "\","
+							+ "\"components\": ["
+							+ "{"
+							+ "\"type\": \"body\","
+							+ "\"parameters\": ["
+							+ "{"
+							+ "\"type\": \"text\","
+							+ "\"text\": \"" + otp + "\""
+							+ "}"
+							+ "]"
+							+ "},"
+							+ "{"
+							+ "\"type\": \"button\","
+							+ "\"sub_type\": \"url\","
+							+ "\"index\": \"0\","
+							+ "\"parameters\": ["
+							+ "{"
+							+ "\"type\": \"text\","
+							+ "\"text\": \"" + otp + "\""
+							+ "}"
+							+ "]"
+							+ "}"
+							+ "]"
+							+ "}"
+							+ "}";
+
+			URL url = new URL(apiUrl);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/json");
+			conn.setRequestProperty("apikey", accessToken);
+			conn.setRequestProperty("wanumber", phoneNumberId);
+			conn.setDoOutput(true);
+
+			try (OutputStream os = conn.getOutputStream()) {
+				byte[] input = payload.getBytes(StandardCharsets.UTF_8);
+				os.write(input, 0, input.length);
+			}
+
+			int status = conn.getResponseCode();
+			String responseJson = "";
+
+			try (InputStream responseStream = (status >= 200 && status < 300) ? conn.getInputStream()
+					: conn.getErrorStream()) {
+				responseJson = new BufferedReader(new InputStreamReader(responseStream)).lines()
+						.collect(Collectors.joining("\n"));
+			}
+
+			System.out.println("[PICKUP OTP WhatsApp] Status: " + status + " | Phone: " + mobileno);
+			System.out.println("[PICKUP OTP WhatsApp] OTP: " + otp + " | OrderQty: " + orderqty + " | PickupQty: " + pickupqty);
+			System.out.println("[PICKUP OTP WhatsApp] Response: " + responseJson);
+
+			if (status == HttpURLConnection.HTTP_OK) {
+				message = "Message is submitted!";
+			} else {
+				message = "Failed to submit the message. HTTP Status Code: " + status + " Response: " + responseJson;
+			}
+
+			conn.disconnect();
+		} catch (Exception e) {
+			e.printStackTrace();
+			message = "Error sending WhatsApp message: " + e.getMessage();
+			System.out.println("[PICKUP OTP WhatsApp] ERROR: " + e.getMessage());
+		}
+		return message;
+	}
+
 }
