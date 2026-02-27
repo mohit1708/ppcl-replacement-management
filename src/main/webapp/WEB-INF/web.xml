@@ -343,10 +343,10 @@
             <url-pattern>/pickup/otp/generate</url-pattern>
      </servlet-mapping>
 
-<servlet-mapping>
-    <servlet-name>PickupOtpServlet</servlet-name>
-    <url-pattern>/pickup/otp/validate</url-pattern>
-</servlet-mapping>
+      <servlet-mapping>
+            <servlet-name>PickupOtpServlet</servlet-name>
+            <url-pattern>/pickup/otp/validate</url-pattern>
+     </servlet-mapping>
 
     <!-- ServiceTLActionServlet -->
     <servlet>
