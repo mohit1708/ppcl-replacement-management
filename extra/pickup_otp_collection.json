@@ -1,0 +1,585 @@
+{
+  "info": {
+    "_postman_id": "03ca3f6c-635f-4e14-a146-ea21855d193f",
+    "name": "Pickup OTP API",
+    "description": "Pickup OTP - Generate and Validate OTP for cartridge pickup flow.\n\nAll 3 fields (callId, replacementRequestId, printerSerialNo) must match a valid row in REPLACEMENT_PULLBACK table.\n\nIf pickupQty == orderedQty, OTP is skipped (quantities match, no confirmation needed).\nIf pickupQty != orderedQty, OTP is sent via WhatsApp for confirmation.\n\nWhatsApp Template:\nDear Customer, we are collecting {pickupQty} unused cartridges against the confirmed {orderedQty}. Please provide OTP {OTP} to our pickup executive for confirmation.\n\nOTP Rules:\n- 4 digit OTP\n- Valid for 5 minutes\n- Sent via WhatsApp",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "26124488"
+  },
+  "item": [
+    {
+      "name": "Generate OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/pickup/otp/generate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "pickup",
+            "otp",
+            "generate"
+          ]
+        },
+        "description": "## Generate OTP\n\nSends a 4-digit OTP to the customer's mobile number via WhatsApp.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP sent).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. Gets mobile number from CLIENT table (via CLIENT_DOT_ID)\n3. If pickupQty == orderedQty → returns QTY_MATCH, no OTP needed\n4. Checks attempt count (max 5, then blocked 1 hour)\n5. Generates 4-digit OTP, stores in OTP_MANAGEMENT table\n6. Sends OTP via WhatsApp (template: cart_pickup_otp)\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| printerSerialNo | string | Yes | Printer serial number (REPLACEMENT_PULLBACK.P_SERIAL_NO) |\n| replacementRequestId | integer | Yes | Replacement request ID (REPLACEMENT_PULLBACK.REPLACEMENT_REQ_ID) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| OTP_SENT | OTP generated and sent via WhatsApp |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback or mobile not available |\n| OTP_BLOCKED | Max 5 attempts exceeded, blocked for 1 hour |\n| FAILURE | Server or database error |\n\n### curl (qty mismatch - OTP will be sent)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```\n\n### curl (qty match - no OTP)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"5\",\"orderedQty\":\"5\"}'\n```"
+      },
+      "response": [
+        {
+          "name": "OTP Sent Successfully",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "generate"
+              ]
+            },
+            "description": "## Generate OTP\n\nSends a 4-digit OTP to the customer's mobile number via WhatsApp.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP sent).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. Gets mobile number from CLIENT table (via CLIENT_DOT_ID)\n3. If pickupQty == orderedQty → returns QTY_MATCH, no OTP needed\n4. Checks attempt count (max 5, then blocked 1 hour)\n5. Generates 4-digit OTP, stores in OTP_MANAGEMENT table\n6. Sends OTP via WhatsApp (template: cart_pickup_otp)\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| printerSerialNo | string | Yes | Printer serial number (REPLACEMENT_PULLBACK.P_SERIAL_NO) |\n| replacementRequestId | integer | Yes | Replacement request ID (REPLACEMENT_PULLBACK.REPLACEMENT_REQ_ID) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| OTP_SENT | OTP generated and sent via WhatsApp |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback or mobile not available |\n| OTP_BLOCKED | Max 5 attempts exceeded, blocked for 1 hour |\n| FAILURE | Server or database error |\n\n### curl (qty mismatch - OTP will be sent)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```\n\n### curl (qty match - no OTP)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"5\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"OTP_SENT\",\n    \"message\": \"OTP has been sent successfully\"\n}"
+        },
+        {
+          "name": "Qty Match - No OTP needed",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "generate"
+              ]
+            },
+            "description": "## Generate OTP\n\nSends a 4-digit OTP to the customer's mobile number via WhatsApp.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP sent).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. Gets mobile number from CLIENT table (via CLIENT_DOT_ID)\n3. If pickupQty == orderedQty → returns QTY_MATCH, no OTP needed\n4. Checks attempt count (max 5, then blocked 1 hour)\n5. Generates 4-digit OTP, stores in OTP_MANAGEMENT table\n6. Sends OTP via WhatsApp (template: cart_pickup_otp)\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| printerSerialNo | string | Yes | Printer serial number (REPLACEMENT_PULLBACK.P_SERIAL_NO) |\n| replacementRequestId | integer | Yes | Replacement request ID (REPLACEMENT_PULLBACK.REPLACEMENT_REQ_ID) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| OTP_SENT | OTP generated and sent via WhatsApp |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback or mobile not available |\n| OTP_BLOCKED | Max 5 attempts exceeded, blocked for 1 hour |\n| FAILURE | Server or database error |\n\n### curl (qty mismatch - OTP will be sent)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```\n\n### curl (qty match - no OTP)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"5\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"QTY_MATCH\",\n    \"message\": \"No OTP needed as quantities are matching\"\n}"
+        },
+        {
+          "name": "Invalid Request - No matching pullback",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "generate"
+              ]
+            },
+            "description": "## Generate OTP\n\nSends a 4-digit OTP to the customer's mobile number via WhatsApp.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP sent).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. Gets mobile number from CLIENT table (via CLIENT_DOT_ID)\n3. If pickupQty == orderedQty → returns QTY_MATCH, no OTP needed\n4. Checks attempt count (max 5, then blocked 1 hour)\n5. Generates 4-digit OTP, stores in OTP_MANAGEMENT table\n6. Sends OTP via WhatsApp (template: cart_pickup_otp)\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| printerSerialNo | string | Yes | Printer serial number (REPLACEMENT_PULLBACK.P_SERIAL_NO) |\n| replacementRequestId | integer | Yes | Replacement request ID (REPLACEMENT_PULLBACK.REPLACEMENT_REQ_ID) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| OTP_SENT | OTP generated and sent via WhatsApp |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback or mobile not available |\n| OTP_BLOCKED | Max 5 attempts exceeded, blocked for 1 hour |\n| FAILURE | Server or database error |\n\n### curl (qty mismatch - OTP will be sent)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```\n\n### curl (qty match - no OTP)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"5\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"INVALID_REQUEST\",\n    \"message\": \"No valid replacement pullback found for the given callId, replacementRequestId and printerSerialNo, or mobile number not available\"\n}"
+        },
+        {
+          "name": "OTP Blocked",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "generate"
+              ]
+            },
+            "description": "## Generate OTP\n\nSends a 4-digit OTP to the customer's mobile number via WhatsApp.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP sent).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. Gets mobile number from CLIENT table (via CLIENT_DOT_ID)\n3. If pickupQty == orderedQty → returns QTY_MATCH, no OTP needed\n4. Checks attempt count (max 5, then blocked 1 hour)\n5. Generates 4-digit OTP, stores in OTP_MANAGEMENT table\n6. Sends OTP via WhatsApp (template: cart_pickup_otp)\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| printerSerialNo | string | Yes | Printer serial number (REPLACEMENT_PULLBACK.P_SERIAL_NO) |\n| replacementRequestId | integer | Yes | Replacement request ID (REPLACEMENT_PULLBACK.REPLACEMENT_REQ_ID) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| OTP_SENT | OTP generated and sent via WhatsApp |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback or mobile not available |\n| OTP_BLOCKED | Max 5 attempts exceeded, blocked for 1 hour |\n| FAILURE | Server or database error |\n\n### curl (qty mismatch - OTP will be sent)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```\n\n### curl (qty match - no OTP)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"5\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"OTP_BLOCKED\",\n    \"message\": \"Maximum OTP generation attempts exceeded. Blocked for 1 hour.\"\n}"
+        },
+        {
+          "name": "Missing required field",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "generate"
+              ]
+            },
+            "description": "## Generate OTP\n\nSends a 4-digit OTP to the customer's mobile number via WhatsApp.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP sent).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. Gets mobile number from CLIENT table (via CLIENT_DOT_ID)\n3. If pickupQty == orderedQty → returns QTY_MATCH, no OTP needed\n4. Checks attempt count (max 5, then blocked 1 hour)\n5. Generates 4-digit OTP, stores in OTP_MANAGEMENT table\n6. Sends OTP via WhatsApp (template: cart_pickup_otp)\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| printerSerialNo | string | Yes | Printer serial number (REPLACEMENT_PULLBACK.P_SERIAL_NO) |\n| replacementRequestId | integer | Yes | Replacement request ID (REPLACEMENT_PULLBACK.REPLACEMENT_REQ_ID) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| OTP_SENT | OTP generated and sent via WhatsApp |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback or mobile not available |\n| OTP_BLOCKED | Max 5 attempts exceeded, blocked for 1 hour |\n| FAILURE | Server or database error |\n\n### curl (qty mismatch - OTP will be sent)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```\n\n### curl (qty match - no OTP)\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/generate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"printerSerialNo\":\"ABC123\",\"replacementRequestId\":100,\"pickupQty\":\"5\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"INVALID_REQUEST\",\n    \"message\": \"pickupQty is required\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Validate OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/pickup/otp/validate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "pickup",
+            "otp",
+            "validate"
+          ]
+        },
+        "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+      },
+      "response": [
+        {
+          "name": "OTP Validated Successfully",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"SUCCESS\",\n    \"message\": \"OTP validated successfully\"\n}"
+        },
+        {
+          "name": "Qty Match - No OTP needed",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"QTY_MATCH\",\n    \"message\": \"No OTP needed as quantities are matching\"\n}"
+        },
+        {
+          "name": "Invalid OTP",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"INVALID_OTP\",\n    \"message\": \"Incorrect OTP\"\n}"
+        },
+        {
+          "name": "OTP Expired",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"OTP_EXPIRED\",\n    \"message\": \"OTP has expired\"\n}"
+        },
+        {
+          "name": "OTP Blocked",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"OTP_BLOCKED\",\n    \"message\": \"OTP is currently blocked. Please try again after the block period.\"\n}"
+        },
+        {
+          "name": "No OTP generated yet",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"INVALID_REQUEST\",\n    \"message\": \"No OTP found. Please generate an OTP first.\"\n}"
+        },
+        {
+          "name": "Invalid Request - No matching pullback",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"INVALID_REQUEST\",\n    \"message\": \"No valid replacement pullback found for the given callId, replacementRequestId and printerSerialNo\"\n}"
+        },
+        {
+          "name": "OTP required when qty mismatch",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"callId\": \"362655\",\n    \"printerSerialNo\": \"ZD5HB8KH9F00QX\",\n    \"replacementRequestId\": 549,\n    \"pickupQty\": \"3\",\n    \"orderedQty\": \"5\",\n    \"otp\": \"0909\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pickup/otp/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pickup",
+                "otp",
+                "validate"
+              ]
+            },
+            "description": "## Validate OTP\n\nValidates the OTP entered by the customer for cartridge pickup.\nIf pickupQty == orderedQty, returns QTY_MATCH (no OTP validation needed).\n\n### How it works\n1. Validates callId + replacementRequestId + printerSerialNo match in REPLACEMENT_PULLBACK\n2. If pickupQty == orderedQty → returns QTY_MATCH, no validation needed\n3. Finds OTP record in OTP_MANAGEMENT by pullback ID\n4. Checks if blocked, expired, or already validated\n5. Compares OTP value\n6. On success: clears OTP, resets attempt count\n\n### Request Body\n| Field | Type | Required | Description |\n|---|---|---|---|\n| callId | string | Yes | Call ID (REPLACEMENT_PULLBACK.CALL_ID) |\n| replacementRequestId | integer | Yes | Replacement request ID |\n| printerSerialNo | string | Yes | Printer serial number |\n| otp | string | Yes* | 4-digit OTP (*not required if pickupQty == orderedQty) |\n| pickupQty | string | Yes | Pickup qty entered by pickup executive |\n| orderedQty | string | Yes | Unused cartridges qty ordered during pullback call |\n\n### Response Status Values\n| Status | Meaning |\n|---|---|\n| SUCCESS | OTP validated successfully |\n| QTY_MATCH | No OTP needed, pickupQty == orderedQty |\n| INVALID_REQUEST | No matching pullback, or no OTP generated yet |\n| INVALID_OTP | Wrong OTP or already used |\n| OTP_EXPIRED | OTP expired (5 min validity) |\n| OTP_BLOCKED | Currently blocked |\n| FAILURE | Server or database error |\n\n### curl\n```\ncurl -X POST http://localhost:8085/replacement_management_war_exploded/pickup/otp/validate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"callId\":\"12345\",\"replacementRequestId\":100,\"printerSerialNo\":\"ABC123\",\"otp\":\"1234\",\"pickupQty\":\"3\",\"orderedQty\":\"5\"}'\n```"
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "Text",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"status\": \"INVALID_REQUEST\",\n    \"message\": \"otp is required when pickupQty and orderedQty do not match\"\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8085/replacement_management_war_exploded",
+      "type": "string"
+    }
+  ]
+}
