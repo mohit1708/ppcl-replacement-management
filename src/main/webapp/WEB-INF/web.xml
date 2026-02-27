@@ -332,6 +332,21 @@
         <servlet-name>AMActionServlet</servlet-name>
         <url-pattern>/views/replacement/am/action</url-pattern>
     </servlet-mapping>
+        
+    <servlet>
+            <servlet-name>PickupOtpServlet</servlet-name>
+            <servlet-class>com.ppcl.replacement.servlet.PickupOtpServlet</servlet-class>
+     </servlet>
+
+     <servlet-mapping>
+            <servlet-name>PickupOtpServlet</servlet-name>
+            <url-pattern>/pickup/otp/generate</url-pattern>
+     </servlet-mapping>
+
+<servlet-mapping>
+    <servlet-name>PickupOtpServlet</servlet-name>
+    <url-pattern>/pickup/otp/validate</url-pattern>
+</servlet-mapping>
 
     <!-- ServiceTLActionServlet -->
     <servlet>
